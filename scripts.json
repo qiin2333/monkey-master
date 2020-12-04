@@ -1,0 +1,12 @@
+{
+  // optional but highly recommended
+  "$schema": "https://deno.land/x/denon/schema.json",
+
+  "scripts": {
+    "start": {
+      "cmd": "deno run main.js",
+      "desc": "",
+      "allow": ["env", "write", "read", "net", "run"]
+    }
+  }
+}
