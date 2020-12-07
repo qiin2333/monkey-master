@@ -18,19 +18,19 @@ class MonkeyMaster {
     this.userAgent = options.useRandomUA
       ? this.getRandomUA()
       : DEFAULT_USER_AGENT;
-    this.headers = { 'User-Agent': this.userAgent };
+    this.headers = new Headers({ 'User-Agent': this.userAgent });
     this.userPath = options.userPath || './cookies/';
     this.isLogged = false;
     this.init();
   }
 
-  init() {
-    this.checkLoginStatus();
-    this.loginByQRCode();
+  async init() {
+    await this.validateCookies();
+    await this.loginByQRCode();
   }
 
   async checkLoginStatus() {
-    this.validateCookies();
+    await this.validateCookies();
   }
 
   async validateCookies() {
@@ -38,9 +38,8 @@ class MonkeyMaster {
       queryParams: { rid: Date.now() },
     });
 
-    await fetch(url).then(res => {
-      console.log(res.headers)
-    })
+    const res = await fetch(url);
+    this.headers.set('Cookie', res.headers.get('set-cookie'));
   }
 
   async getQRCode() {
@@ -52,9 +51,8 @@ class MonkeyMaster {
       method: 'GET',
       body: null,
       referrer: 'https://passport.jd.com/new/login.aspx',
-      credentials: 'include',
     }).then((res) => {
-      this.saveCookie(res.headers.get('set-cookie'));
+      this.headers.append('Cookie', res.headers.get('set-cookie'));
       return res.blob();
     });
 
@@ -70,7 +68,7 @@ class MonkeyMaster {
       queryParams: {
         appid: 133,
         callback: `jQuery${random.int(1000000, 9999999)}`,
-        token: getCookie(this.cookies, 'wlfstk_smdl'),
+        token: getCookie(this.headers.get('Cookie'), 'wlfstk_smdl'),
         _: Date.now(),
       },
     });
@@ -83,6 +81,8 @@ class MonkeyMaster {
     }).then((res) => res.text());
 
     r = str2Json(r);
+
+    console.log(r)
 
     if (r.code === 200) {
       return r.ticket;
