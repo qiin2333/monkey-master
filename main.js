@@ -5,12 +5,13 @@ import { exec } from 'https://deno.land/x/exec/mod.ts';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 
 import { logger } from './log.js';
-import { str2Json, getCookie } from './util.js';
+import { str2Json, getCookie, cookieParse } from './util.js';
+import Cookie from './utils/cookiejar.js';
 
 const random = new Random();
 
 const DEFAULT_USER_AGENT =
-  'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.67 Safari/537.36';
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36';
 
 class MonkeyMaster {
   constructor(options = {}) {
@@ -18,15 +19,25 @@ class MonkeyMaster {
     this.userAgent = options.useRandomUA
       ? this.getRandomUA()
       : DEFAULT_USER_AGENT;
-    this.headers = new Headers({ 'User-Agent': this.userAgent });
-    this.userPath = options.userPath || './cookies/';
+    this.headers = new Headers({
+      'User-Agent': this.userAgent,
+      'cache-control': 'no-cache',
+    });
+    (this.cookie = new Cookie()),
+      (this.userPath = options.userPath || './cookies/');
     this.isLogged = false;
     this.init();
   }
 
   async init() {
-    await this.validateCookies();
-    await this.loginByQRCode();
+    // await this.validateCookies();
+    const islogin = await this.loginByQRCode();
+    
+    if (islogin) {
+      logger.info('登录成功了，来造作吧！');
+    } else {
+      logger.error('登录失败');
+    }
   }
 
   async checkLoginStatus() {
@@ -39,20 +50,19 @@ class MonkeyMaster {
     });
 
     const res = await fetch(url);
-    this.headers.set('Cookie', res.headers.get('set-cookie'));
   }
 
   async getQRCode() {
     const url = buildUrl('https://qr.m.jd.com/show', {
-      queryParams: { appid: 133, size: 147, t: Date.now() },
+      queryParams: { appid: 133, size: 147, t: String(Date.now()) },
     });
 
     const blob = await fetch(url, {
       method: 'GET',
-      body: null,
       referrer: 'https://passport.jd.com/new/login.aspx',
+      headers: this.headers,
     }).then((res) => {
-      this.headers.append('Cookie', res.headers.get('set-cookie'));
+      this.saveCookie(res.headers.get('set-cookie'));
       return res.blob();
     });
 
@@ -66,23 +76,23 @@ class MonkeyMaster {
   async getQRCodeTicket() {
     const url = buildUrl('https://qr.m.jd.com/check', {
       queryParams: {
-        appid: 133,
         callback: `jQuery${random.int(1000000, 9999999)}`,
+        appid: 133,
         token: getCookie(this.headers.get('Cookie'), 'wlfstk_smdl'),
-        _: Date.now(),
+        _: String(Date.now()),
       },
     });
+
+    // 只能这样写 referer 才能参数正确，JD 后台贱货
+    this.headers.set('Referer', 'https://passport.jd.com/');
 
     let r = await fetch(url, {
       method: 'GET',
       body: null,
-      referrer: 'https://passport.jd.com/new/login.aspx',
       headers: this.headers,
     }).then((res) => res.text());
 
     r = str2Json(r);
-
-    console.log(r)
 
     if (r.code === 200) {
       return r.ticket;
@@ -92,9 +102,11 @@ class MonkeyMaster {
   }
 
   async loginByQRCode() {
-    await fetch('https://passport.jd.com/new/login.aspx', {
+    const res = await fetch('https://passport.jd.com/new/login.aspx', {
       headers: this.headers,
     });
+
+    this.saveCookie(res.headers.get('set-cookie'));
 
     await this.getQRCode();
 
@@ -109,22 +121,33 @@ class MonkeyMaster {
 
     // 校验 ticket
     if (ticket) {
-      const r = fetch(
+      const r = await fetch(
         buildUrl('https://passport.jd.com/uc/qrCodeTicketValidation', {
           queryParams: { t: ticket },
         }),
         {
-          headers: this.headers,
-          referrer: 'https://passport.jd.com/uc/login?ltype=logout',
+          headers: this.headers.set(
+            'Referer',
+            'https://passport.jd.com/uc/login?ltype=logout'
+          ),
         }
       );
 
-      console.log(r);
+      return r.status === 200;
     }
   }
 
   saveCookie(cookie) {
-    this.cookies = cookie;
+    console.log(cookie);
+    const oldCookie = this.headers.get('Cookie');
+
+    let newCookie = cookieParse(cookie);
+
+    if (oldCookie) {
+      newCookie = oldCookie + '; ' + newCookie;
+    }
+
+    return this.headers.set('Cookie', newCookie);
     // this.headers['Cookie'] = cookie;
   }
 }
