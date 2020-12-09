@@ -6,7 +6,6 @@ import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 
 import { logger } from './log.js';
 import { str2Json, getCookie, cookieParse } from './util.js';
-import Cookie from './utils/cookiejar.js';
 
 const random = new Random();
 
@@ -15,29 +14,33 @@ const DEFAULT_USER_AGENT =
 
 class MonkeyMaster {
   constructor(options = {}) {
-    this.skuid = options.skuid;
+    this.skuids = (options.skuids || '').split(',');
     this.userAgent = options.useRandomUA
       ? this.getRandomUA()
       : DEFAULT_USER_AGENT;
     this.headers = new Headers({
       'User-Agent': this.userAgent,
       'cache-control': 'no-cache',
+      'x-requested-with': 'XMLHttpRequest',
     });
-    (this.cookie = new Cookie()),
-      (this.userPath = options.userPath || './cookies/');
+    this.userPath = options.userPath || './cookies/';
     this.isLogged = false;
     this.init();
   }
 
   async init() {
-    // await this.validateCookies();
+    await this.validateCookies();
     const islogin = await this.loginByQRCode();
-    
+
     if (islogin) {
       logger.info('登录成功了，来造作吧！');
     } else {
-      logger.error('登录失败');
+      return logger.error('登录失败');
     }
+
+    await this.getUserInfo();
+
+    await this.addCart(this.skuids);
   }
 
   async checkLoginStatus() {
@@ -110,7 +113,7 @@ class MonkeyMaster {
 
     await this.getQRCode();
 
-    const timeLmt = 30 * 1000;
+    const timeLmt = 80 * 1000;
     const startTime = Date.now();
     let ticket;
 
@@ -121,24 +124,53 @@ class MonkeyMaster {
 
     // 校验 ticket
     if (ticket) {
+      this.headers.set('Referer','https://passport.jd.com/uc/login?ltype=logout');
+
       const r = await fetch(
         buildUrl('https://passport.jd.com/uc/qrCodeTicketValidation', {
           queryParams: { t: ticket },
         }),
         {
-          headers: this.headers.set(
-            'Referer',
-            'https://passport.jd.com/uc/login?ltype=logout'
-          ),
+          method: 'GET',
+          headers: this.headers,
+          credentials: 'include',
         }
-      );
+      ).then(res => {
+        this.saveCookie(res.headers.get('set-cookie'));
+        return res;
+      })
 
       return r.status === 200;
     }
+    return false;
+  }
+
+  async getUserInfo() {
+    const url = buildUrl(
+      'https://passport.jd.com/user/petName/getUserInfoForMiniJd.action',
+      {
+        queryParams: {
+          callback: `jQuery${random.int(1000000, 9999999)}`,
+          _: String(Date.now()),
+        },
+      }
+    );
+
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: this.headers.set(
+        'Referer',
+        'https://order.jd.com/center/list.action'
+      ),
+      credentials: 'include',
+      redirect: 'error',
+    });
+
+    console.log(await res.text(), '----------------userInfo')
   }
 
   saveCookie(cookie) {
-    console.log(cookie);
+    // console.log(cookie);
     const oldCookie = this.headers.get('Cookie');
 
     let newCookie = cookieParse(cookie);
@@ -150,8 +182,47 @@ class MonkeyMaster {
     return this.headers.set('Cookie', newCookie);
     // this.headers['Cookie'] = cookie;
   }
+
+  /**
+   *
+   * @param {Array} skuids
+   */
+  async addCart(skuids = []) {
+    let url = 'https://cart.jd.com/gate.action';
+    const payload = { pcount: 1, ptype: 1 };
+
+    for (let skuid of skuids) {
+      url = buildUrl(url, {
+        queryParams: {
+          pid: skuid,
+          ...payload,
+        }
+      })
+
+      this.headers.set('Referer', `https://item.jd.com/${skuid}.html`)
+      const res = await fetch(url, {headers: this.headers});
+      const ret = await this.loginCheck(res.url);
+
+      if (ret) {
+        logger.info(`商品${skuid}-加车成功`);
+      } else {
+        logger.info(`商品${skuid}-加车失败`);
+        return ret
+      }
+    }
+
+    return true;
+  }
+
+  async loginCheck(url) {
+    if (/login\.aspx/g.test(url)) {
+      return await this.loginByQRCode()
+    } else {
+      return true
+    }
+  }
 }
 
 const ins = new MonkeyMaster({
-  skuid: prompt('输入抢购skuid', '100016516660'),
+  skuids: prompt('输入抢购skuid', '100015521042'),
 });
