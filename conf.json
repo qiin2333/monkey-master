@@ -1,0 +1,15 @@
+{
+  "timeout": 5000,
+  "useRandomUA": false,
+  "notify": true,
+  "sckey": "SCU131284T28c6dd0f3f148cfd540aa265de7709fc5fc4aba379f1f",
+  "orderDeps": {
+    "eid": "QFD6L3JGYJZQTNKUR3KL5HXWYM2ZJTTHOIP2USVHEYUSHYILCMXWVMWZZG7NG52LZMHFEUTFRVEJYXIBZO4EOETYOM",
+    "fp": "542e29cb90cb76c5358e3b613371c188",
+    "trackId": "TestTrackId",
+    "riskControl": "",
+    "area": "12_978_2927_58064",
+    "password": "123456"
+  },
+  "userPath": "./cookies/"
+}

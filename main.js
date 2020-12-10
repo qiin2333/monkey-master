@@ -3,19 +3,24 @@ import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { exec } from 'https://deno.land/x/exec/mod.ts';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
+import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
 import { logger } from './log.js';
-import { str2Json, getCookie, cookieParse } from './util.js';
+import { str2Json, getCookie, cookieParse, encodePwd } from './util.js';
 
 const random = new Random();
-
 const DEFAULT_USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36';
+const CONFIG = await loadJsonFile('conf.json');
+const skuInfoCache = {};
 
 class MonkeyMaster {
   constructor(options = {}) {
     this.skuids = (options.skuids || '').split(',');
-    this.userAgent = options.useRandomUA
+    this.eid = CONFIG.orderDeps.eid || prompt('未配置 eid, 请输入');
+    this.fp = CONFIG.orderDeps.fp || prompt('未配置 fp, 请输入');
+    this.areaId = CONFIG.orderDeps.area || prompt('未配置 area, 请输入');
+    this.userAgent = CONFIG.useRandomUA
       ? this.getRandomUA()
       : DEFAULT_USER_AGENT;
     this.headers = new Headers({
@@ -23,7 +28,7 @@ class MonkeyMaster {
       'cache-control': 'no-cache',
       'x-requested-with': 'XMLHttpRequest',
     });
-    this.userPath = options.userPath || './cookies/';
+    this.userPath = CONFIG.userPath || './cookies/';
     this.isLogged = false;
     this.init();
   }
@@ -31,16 +36,14 @@ class MonkeyMaster {
   async init() {
     await this.validateCookies();
     const islogin = await this.loginByQRCode();
-
     if (islogin) {
       logger.info('登录成功了，来造作吧！');
     } else {
       return logger.error('登录失败');
     }
-
     await this.getUserInfo();
-
     await this.addCart(this.skuids);
+    await this.buyInStock();
   }
 
   async checkLoginStatus() {
@@ -124,7 +127,10 @@ class MonkeyMaster {
 
     // 校验 ticket
     if (ticket) {
-      this.headers.set('Referer','https://passport.jd.com/uc/login?ltype=logout');
+      this.headers.set(
+        'Referer',
+        'https://passport.jd.com/uc/login?ltype=logout'
+      );
 
       const r = await fetch(
         buildUrl('https://passport.jd.com/uc/qrCodeTicketValidation', {
@@ -135,10 +141,10 @@ class MonkeyMaster {
           headers: this.headers,
           credentials: 'include',
         }
-      ).then(res => {
+      ).then((res) => {
         this.saveCookie(res.headers.get('set-cookie'));
         return res;
-      })
+      });
 
       return r.status === 200;
     }
@@ -166,13 +172,11 @@ class MonkeyMaster {
       redirect: 'error',
     });
 
-    console.log(await res.text(), '----------------userInfo')
+    console.log(await res.text(), '----------------userInfo');
   }
 
   saveCookie(cookie) {
-    // console.log(cookie);
     const oldCookie = this.headers.get('Cookie');
-
     let newCookie = cookieParse(cookie);
 
     if (oldCookie) {
@@ -196,33 +200,148 @@ class MonkeyMaster {
         queryParams: {
           pid: skuid,
           ...payload,
-        }
-      })
+        },
+      });
 
-      this.headers.set('Referer', `https://item.jd.com/${skuid}.html`)
-      const res = await fetch(url, {headers: this.headers});
+      this.headers.set('Referer', `https://item.jd.com/${skuid}.html`);
+      const res = await fetch(url, { headers: this.headers });
       const ret = await this.loginCheck(res.url);
 
       if (ret) {
         logger.info(`商品${skuid}-加车成功`);
       } else {
         logger.info(`商品${skuid}-加车失败`);
-        return ret
+        return ret;
       }
     }
 
     return true;
   }
 
+  /**
+   * 订单结算页
+   */
+  async getOrderInfo() {
+    const url = buildUrl(
+      'http://trade.jd.com/shopping/order/getOrderInfo.action',
+      {
+        queryParams: {
+          rid: String(Date.now()),
+        },
+      }
+    );
+
+    const res = await fetch(url);
+    console.log(await res.text())
+  }
+
+  async submitOrder() {
+    const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
+
+    const payload = {
+      overseaPurchaseCookies: '',
+      vendorRemarks: '[]',
+      'submitOrderParam.sopNotPutInvoice': 'false',
+      // 'submitOrderParam.presalePayType': 1,   # 预售
+      'submitOrderParam.trackID': 'TestTrackId',
+      'submitOrderParam.ignorePriceChange': '0',
+      'submitOrderParam.btSupport': '0',
+      riskControl: self.risk_control,
+      'submitOrderParam.isBestCoupon': 1,
+      'submitOrderParam.jxj': 1,
+      'submitOrderParam.trackId': 'TestTrackId',
+      // 'submitOrderParam.payType4YuShou': 1,    # 预售
+      'submitOrderParam.eid': self.eid,
+      'submitOrderParam.fp': self.fp,
+      'submitOrderParam.needCheck': 1,
+    };
+
+    if (CONFIG.orderDeps.password) {
+      payload['submitOrderParam.payPassword'] = encodePwd(
+        CONFIG.orderDeps.password
+      );
+    }
+
+    this.headers.set('Host', 'trade.jd.com');
+    this.headers.set(
+      'Referer',
+      'http://trade.jd.com/shopping/order/getOrderInfo.action'
+    );
+    this.headers.set('content-type', 'application/x-www-form-urlencoded');
+
+    logger.info(`submit_order req start at ${Date()}`);
+
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify(payload),
+    });
+
+    console.log(await res.text());
+
+    return res.status === 200;
+  }
+
+  /**
+   * 定时下单
+   */
+  async buyOnTime() {}
+
+  /**
+   *
+   *
+   * @param {number} [interval=5]   轮询间隔，单位秒
+   * @memberof MonkeyMaster
+   */
+  async buyInStock(interval = 5) {
+    let isInStock = false;
+
+    while (!isInStock) {
+      isInStock = await this.getSkuStockInfo(this.skuids, this.areaId);
+      await sleep(interval);
+    }
+    await this.getOrderInfo();
+    await this.submitOrder();
+  }
+
   async loginCheck(url) {
     if (/login\.aspx/g.test(url)) {
-      return await this.loginByQRCode()
+      return await this.loginByQRCode();
     } else {
-      return true
+      return true;
     }
+  }
+
+  /**
+   *
+   *
+   * @param {Array} skuids
+   * @param {String} areaId
+   */
+  async getSkuStockInfo(skuids, areaId) {
+    const url = buildUrl('https://c0.3.cn/stocks', {
+      queryParams: {
+        callback: `jQuery${random.int(1000000, 9999999)}`,
+        type: 'getstocks',
+        skuIds: skuids.join(','),
+        area: areaId,
+        _: String(Date.now()),
+      },
+    });
+
+    const res = await fetch(url, { headers: this.headers });
+    const stockInfo = str2Json(await res.text());
+
+    logger.info(stockInfo, '库存信息');
+
+    return (
+      stockInfo &&
+      stockInfo['skuState'] === 1 &&
+      [33, 40].includes(stockInfo['StockState'])
+    );
   }
 }
 
 const ins = new MonkeyMaster({
-  skuids: prompt('输入抢购skuid', '100015521042'),
+  skuids: prompt('输入抢购skuid,可以是多个，以逗号(,)分割', '100015521042'),
 });
