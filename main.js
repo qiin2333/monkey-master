@@ -232,11 +232,12 @@ class MonkeyMaster {
     );
 
     const res = await fetch(url);
-    console.log(await res.text())
+    console.log(await res.text());
   }
 
   async submitOrder() {
     const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
+    const orderDeps = CONFIG.orderDeps;
 
     const payload = {
       overseaPurchaseCookies: '',
@@ -246,20 +247,18 @@ class MonkeyMaster {
       'submitOrderParam.trackID': 'TestTrackId',
       'submitOrderParam.ignorePriceChange': '0',
       'submitOrderParam.btSupport': '0',
-      riskControl: self.risk_control,
+      riskControl: orderDeps.riskControl,
       'submitOrderParam.isBestCoupon': 1,
       'submitOrderParam.jxj': 1,
       'submitOrderParam.trackId': 'TestTrackId',
       // 'submitOrderParam.payType4YuShou': 1,    # 预售
-      'submitOrderParam.eid': self.eid,
-      'submitOrderParam.fp': self.fp,
+      'submitOrderParam.eid': this.eid,
+      'submitOrderParam.fp': this.fp,
       'submitOrderParam.needCheck': 1,
     };
 
-    if (CONFIG.orderDeps.password) {
-      payload['submitOrderParam.payPassword'] = encodePwd(
-        CONFIG.orderDeps.password
-      );
+    if (orderDeps.password) {
+      payload['submitOrderParam.payPassword'] = encodePwd(orderDeps.password);
     }
 
     this.headers.set('Host', 'trade.jd.com');
