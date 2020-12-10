@@ -339,6 +339,61 @@ class MonkeyMaster {
       [33, 40].includes(stockInfo['StockState'])
     );
   }
+
+  async getCartInfo() {
+    const url = buildUrl('https://api.m.jd.com/api', {
+      queryParams: {
+        functionId: 'pcCart_jc_getCurrentCart',
+        appid: 'JDC_mall_cart',
+        loginType: 3,
+      },
+    });
+
+    const payload = {
+      serInfo: {
+        area: this.areaId,
+        'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
+      },
+      cartExt: {
+        specialId: 1,
+      },
+    };
+
+    this.headers.set('Referer', 'https://cart.jd.com/');
+
+    const res = await fetch(url, {
+      headers: this.headers,
+      body: JSON.stringify(payload),
+    });
+
+    let cartInfo = {};
+    let vendors = [];
+    let ret = [];
+
+    try {
+      cartInfo = str2Json(await res.text())['resultData']['cartInfo'];
+      vendors = cartInfo['vendors'];
+
+      for (let vendor of vendors) {
+        ret.push(vendor['sorted']);
+      }
+    } catch (error) {}
+
+    return ret;
+  }
+
+  async cancelSelectCartSkus() {
+    const url = 'https://cart.jd.com/cancelAllItem.action';
+    const payload = {
+      t: 0,
+      outSkus: '',
+      random: random.int(),
+    };
+
+    return await fetch(url, {
+      payload: JSON.stringify(payload),
+    }).then((res) => res.headers.status === 200);
+  }
 }
 
 const ins = new MonkeyMaster({
