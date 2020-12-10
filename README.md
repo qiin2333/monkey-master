@@ -5,7 +5,7 @@
 ### 启动
 
 ``` bash
-deno run --allow-read --allow-write --allow-net main.js   
+deno run --allow-read --allow-write --allow-net --allow-run main.js   
 
 or
 
