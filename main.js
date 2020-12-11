@@ -1,4 +1,4 @@
-import { osType, isWindows } from 'https://deno.land/std@0.79.0/_util/os.ts';
+import { osType, isWindows } from 'https://deno.land/std@0.80.0/_util/os.ts';
 import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { exec } from 'https://deno.land/x/exec/mod.ts';
@@ -229,7 +229,6 @@ export default class MonkeyMaster {
     const res = await fetch(url);
     logger.info(`订单结算页面响应: ${res.status}`);
 
-
     // TODO: parse fingerprint
     // const tdjsCode = await fetch('https://gias.jd.com/js/td.js').then((res) =>
     //   res.text()
@@ -286,8 +285,33 @@ export default class MonkeyMaster {
 
   /**
    * 定时下单
+   * @param {string} time "yyyy-MM-dd HH:mm:ss.SSS"
    */
-  async buyOnTime() {}
+  async buyOnTime(time) {
+    if (!time) return;
+    const setTimeStamp = Date.parse(time);
+    const jdTime = Date.parse(await this.timeSyncWithJD());
+    const now = Date.now();
+    let timer;
+
+    while (setTimeStamp > jdTime) {
+      clearTimeout(timer);
+      timer = setTimeout(async () => {
+        await this.cancelSelectCartSkus();
+        await this.addCart(this.skuids);
+        await this.getOrderInfo();
+        await this.submitOrder()
+      }, setTimeStamp - now);
+      logger.info(`距离抢购还剩 ${setTimeStamp - now} 秒`);
+      // 30秒同步一次时间
+      await sleep(30);
+    }
+  }
+
+  async timeSyncWithJD() {
+    const res = await fetch('https://a.jd.com//ajax/queryServerData.html');
+    return res.headers.get('date');
+  }
 
   /**
    *

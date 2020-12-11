@@ -23,7 +23,8 @@ switch (mode) {
     break;
 
   case '2':
-    await ins.buyOnTime();
+    const time = prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
+    await ins.buyOnTime(time);
     break;
 
   default:
