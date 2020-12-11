@@ -19,7 +19,6 @@ export function cookieParse(cookies) {
 
 export function getCookie(cookieStr, key) {
   const reg = new RegExp(`${key}=(.*?)(;|$)`, 'm');
-  console.log(cookieStr.match(reg));
   return cookieStr.match(reg)[1];
 }
 

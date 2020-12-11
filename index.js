@@ -10,17 +10,22 @@ const ins = new MonkeyMaster({
   fp: CONFIG.orderDeps.fp || prompt('未配置 fp, 请输入'),
 });
 
-const mode = prompt('选择运行模式: 1-有货下单，2-按时下单，3-提前秒杀， 默认为1', 1);
+await ins.init();
+
+const mode = prompt(
+  '选择运行模式: 1-有货下单，2-按时下单，3-提前秒杀， 默认为1',
+  '1'
+);
 
 switch (mode) {
-    case 1:
-        await ins.buyInStock();
-        break;
+  case '1':
+    await ins.buyInStock();
+    break;
 
-    case 2:
-        await ins.buyOnTime();
-        break;
+  case '2':
+    await ins.buyOnTime();
+    break;
 
-    default:
-        break;
+  default:
+    break;
 }

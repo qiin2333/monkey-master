@@ -28,7 +28,7 @@ export default class MonkeyMaster {
     });
     this.userPath = CONFIG.userPath || './cookies/';
     this.isLogged = false;
-    this.init();
+    this.headers.set('Cookie', '');
   }
 
   async init() {
@@ -39,9 +39,6 @@ export default class MonkeyMaster {
     } else {
       return logger.error('登录失败');
     }
-    await this.getUserInfo();
-    await this.addCart(this.skuids);
-    await this.buyInStock();
   }
 
   async checkLoginStatus() {
@@ -205,7 +202,7 @@ export default class MonkeyMaster {
       const res = await fetch(url, { headers: this.headers });
       const ret = await this.loginCheck(res.url);
 
-      if (ret) {
+      if (res.status === 200 && ret) {
         logger.info(`商品${skuid}-加车成功`);
       } else {
         logger.info(`商品${skuid}-加车失败`);
@@ -230,7 +227,13 @@ export default class MonkeyMaster {
     );
 
     const res = await fetch(url);
-    console.log(await res.text());
+    logger.info(`订单结算页面响应: ${res.status}`);
+
+    const tdjsCode = await fetch('https://gias.jd.com/js/td.js').then((res) =>
+      res.text()
+    );
+    new Function('$', tdjsCode)();
+    console.log(_JdJrTdRiskFpInfo);
   }
 
   async submitOrder() {
@@ -293,12 +296,23 @@ export default class MonkeyMaster {
   async buyInStock(interval = 5) {
     let isInStock = false;
 
+    await this.cancelSelectCartSkus();
+    await this.addCart(this.skuids);
+    await this.getOrderInfo();
+
     while (!isInStock) {
-      isInStock = await this.getSkuStockInfo(this.skuids, this.areaId);
+      isInStock = await this.getSkuStockInfo(this.skuids, this.options.areaId);
+      logger.debug(`${this.skuids}暂无库存，${interval}秒后再次查询`);
       await sleep(interval);
     }
-    await this.getOrderInfo();
-    await this.submitOrder();
+
+    logger.info(`${this.skuids}好像有货了喔，下单试试`);
+
+    if (await this.submitOrder()) {
+      return true;
+    } else {
+      await this.buyInStock(interval);
+    }
   }
 
   async loginCheck(url) {
@@ -329,7 +343,7 @@ export default class MonkeyMaster {
     const res = await fetch(url, { headers: this.headers });
     const stockInfo = str2Json(await res.text());
 
-    logger.info(stockInfo, '库存信息');
+    // logger.info(`库存信息: ${stockInfo['skuState']}`);
 
     return (
       stockInfo &&
