@@ -1,4 +1,4 @@
-import { osType } from 'https://deno.land/std@0.79.0/_util/os.ts';
+import { osType, isWindows } from 'https://deno.land/std@0.79.0/_util/os.ts';
 import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { exec } from 'https://deno.land/x/exec/mod.ts';
@@ -71,7 +71,7 @@ export default class MonkeyMaster {
     const buffer = await blob.arrayBuffer();
     const unit8arr = new Deno.Buffer(buffer).bytes();
     Deno.writeFileSync('qrcode.png', unit8arr);
-    return await exec('open qrcode.png');
+    return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
   }
 
   async getQRCodeTicket() {
@@ -107,7 +107,7 @@ export default class MonkeyMaster {
       headers: this.headers,
     });
 
-    this.saveCookie(res.headers.get('set-cookie'));
+    // this.saveCookie(res.headers.get('set-cookie'));
 
     await this.getQRCode();
 

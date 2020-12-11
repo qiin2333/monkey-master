@@ -10,7 +10,7 @@ export function str2Json(str) {
  * @param  {String} cookies     headers['set-cookie'] value
  * @return {String}
  */
-export function cookieParse(cookies) {
+export function cookieParse(cookies = '') {
   return cookies
     .split(',')
     .map((str) => str.split(';')[0].trim())
