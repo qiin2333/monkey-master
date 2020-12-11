@@ -239,7 +239,7 @@ export default class MonkeyMaster {
 
   async submitOrder() {
     const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
-    const orderDeps = this.options.orderDeps;
+    const { eid, fp, riskControl } = this.options;
 
     const payload = {
       overseaPurchaseCookies: '',
@@ -249,13 +249,13 @@ export default class MonkeyMaster {
       'submitOrderParam.trackID': 'TestTrackId',
       'submitOrderParam.ignorePriceChange': '0',
       'submitOrderParam.btSupport': '0',
-      riskControl: orderDeps.riskControl,
+      riskControl: '',
       'submitOrderParam.isBestCoupon': 1,
       'submitOrderParam.jxj': 1,
       'submitOrderParam.trackId': 'TestTrackId',
       // 'submitOrderParam.payType4YuShou': 1,    # 预售
-      'submitOrderParam.eid': orderDeps.eid,
-      'submitOrderParam.fp': orderDeps.fp,
+      'submitOrderParam.eid': eid,
+      'submitOrderParam.fp': fp,
       'submitOrderParam.needCheck': 1,
     };
 
@@ -302,7 +302,7 @@ export default class MonkeyMaster {
         await this.cancelSelectCartSkus();
         await this.addCart(this.skuids);
         await this.getOrderInfo();
-        await this.submitOrder()
+        await this.submitOrder();
       }, setTimeStamp - jdTime);
       logger.info(`距离抢购还剩 ${setTimeStamp - jdTime} 秒`);
       // 30秒同步一次时间
