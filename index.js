@@ -10,7 +10,7 @@ const ins = new MonkeyMaster({
   fp: CONFIG.orderDeps.fp || prompt('未配置 fp, 请输入'),
 });
 
-const mod = prompt('选择允许模式: 1-有货下单，2-按时下单，3-提前秒杀， 默认为1', 1);
+const mode = prompt('选择运行模式: 1-有货下单，2-按时下单，3-提前秒杀， 默认为1', 1);
 
 switch (mode) {
     case 1:

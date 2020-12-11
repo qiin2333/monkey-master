@@ -14,7 +14,7 @@ const DEFAULT_USER_AGENT =
 const CONFIG = await loadJsonFile('conf.json');
 const skuInfoCache = {};
 
-class MonkeyMaster {
+export default class MonkeyMaster {
   constructor(options = {}) {
     this.options = options;
     this.skuids = (options.skuids || '').split(',');
@@ -392,4 +392,4 @@ class MonkeyMaster {
       payload: JSON.stringify(payload),
     }).then((res) => res.headers.status === 200);
   }
-
+}
