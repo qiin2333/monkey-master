@@ -229,11 +229,13 @@ export default class MonkeyMaster {
     const res = await fetch(url);
     logger.info(`订单结算页面响应: ${res.status}`);
 
-    const tdjsCode = await fetch('https://gias.jd.com/js/td.js').then((res) =>
-      res.text()
-    );
-    new Function('$', tdjsCode)();
-    console.log(_JdJrTdRiskFpInfo);
+
+    // TODO: parse fingerprint
+    // const tdjsCode = await fetch('https://gias.jd.com/js/td.js').then((res) =>
+    //   res.text()
+    // );
+    // new Function('$', tdjsCode)();
+    // console.log(_JdJrTdRiskFpInfo);
   }
 
   async submitOrder() {
