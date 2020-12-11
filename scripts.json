@@ -4,7 +4,7 @@
 
   "scripts": {
     "start": {
-      "cmd": "deno run main.js",
+      "cmd": "deno run index.js",
       "desc": "",
       "allow": ["env", "write", "read", "net", "run"]
     }

@@ -16,10 +16,8 @@ const skuInfoCache = {};
 
 class MonkeyMaster {
   constructor(options = {}) {
+    this.options = options;
     this.skuids = (options.skuids || '').split(',');
-    this.eid = CONFIG.orderDeps.eid || prompt('未配置 eid, 请输入');
-    this.fp = CONFIG.orderDeps.fp || prompt('未配置 fp, 请输入');
-    this.areaId = CONFIG.orderDeps.area || prompt('未配置 area, 请输入');
     this.userAgent = CONFIG.useRandomUA
       ? this.getRandomUA()
       : DEFAULT_USER_AGENT;
@@ -237,7 +235,7 @@ class MonkeyMaster {
 
   async submitOrder() {
     const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
-    const orderDeps = CONFIG.orderDeps;
+    const orderDeps = this.options.orderDeps;
 
     const payload = {
       overseaPurchaseCookies: '',
@@ -252,8 +250,8 @@ class MonkeyMaster {
       'submitOrderParam.jxj': 1,
       'submitOrderParam.trackId': 'TestTrackId',
       // 'submitOrderParam.payType4YuShou': 1,    # 预售
-      'submitOrderParam.eid': this.eid,
-      'submitOrderParam.fp': this.fp,
+      'submitOrderParam.eid': orderDeps.eid,
+      'submitOrderParam.fp': orderDeps.fp,
       'submitOrderParam.needCheck': 1,
     };
 
@@ -394,8 +392,4 @@ class MonkeyMaster {
       payload: JSON.stringify(payload),
     }).then((res) => res.headers.status === 200);
   }
-}
 
-const ins = new MonkeyMaster({
-  skuids: prompt('输入抢购skuid,可以是多个，以逗号(,)分割', '100015521042'),
-});
