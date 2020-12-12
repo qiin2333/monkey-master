@@ -290,23 +290,27 @@ export default class MonkeyMaster {
   async buyOnTime(time) {
     if (!time) return;
     const setTimeStamp = Date.parse(time);
+    const runOrder = async () => {
+      await this.cancelSelectCartSkus();
+      await this.addCart(this.skuids);
+      await this.getOrderInfo();
+      await this.submitOrder();
+    }
+
     // let now = Date.now();
     let jdTime = Date.parse(await this.timeSyncWithJD());
-    let timer;
 
-    while (setTimeStamp > jdTime) {
-      jdTime = Date.parse(await this.timeSyncWithJD());
+    let timer = setTimeout(runOrder, setTimeStamp - jdTime);
 
-      clearTimeout(timer);
-      timer = setTimeout(async () => {
-        await this.cancelSelectCartSkus();
-        await this.addCart(this.skuids);
-        await this.getOrderInfo();
-        await this.submitOrder();
-      }, setTimeStamp - jdTime);
-      logger.info(`距离抢购还剩 ${setTimeStamp - jdTime} 秒`);
+    while (setTimeStamp > jdTime) {      
       // 30秒同步一次时间
       await sleep(30);
+      clearTimeout(timer);
+      
+      jdTime = Date.parse(await this.timeSyncWithJD());
+      timer = setTimeout(runOrder, setTimeStamp - jdTime);
+
+      logger.info(`距离抢购还剩 ${setTimeStamp - jdTime} 秒`);
     }
   }
 
