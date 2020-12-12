@@ -39,6 +39,8 @@ export default class MonkeyMaster {
     } else {
       return logger.error('登录失败');
     }
+
+    await this.getUserInfo();
   }
 
   async checkLoginStatus() {
@@ -107,8 +109,6 @@ export default class MonkeyMaster {
       headers: this.headers,
     });
 
-    // this.saveCookie(res.headers.get('set-cookie'));
-
     await this.getQRCode();
 
     const timeLmt = 80 * 1000;
@@ -163,14 +163,13 @@ export default class MonkeyMaster {
         'Referer',
         'https://order.jd.com/center/list.action'
       ),
-      credentials: 'include',
+      // credentials: 'include',
       redirect: 'error',
     });
-
-    console.log(await res.text(), '----------------userInfo');
   }
 
   saveCookie(cookie) {
+    if (cookie === null) return;
     const oldCookie = this.headers.get('Cookie');
     let newCookie = cookieParse(cookie);
 
@@ -295,18 +294,18 @@ export default class MonkeyMaster {
       await this.addCart(this.skuids);
       await this.getOrderInfo();
       await this.submitOrder();
-    }
+    };
 
     // let now = Date.now();
     let jdTime = Date.parse(await this.timeSyncWithJD());
 
     let timer = setTimeout(runOrder, setTimeStamp - jdTime);
 
-    while (setTimeStamp > jdTime) {      
+    while (setTimeStamp > jdTime) {
       // 30秒同步一次时间
       await sleep(30);
       clearTimeout(timer);
-      
+
       jdTime = Date.parse(await this.timeSyncWithJD());
       timer = setTimeout(runOrder, setTimeStamp - jdTime);
 
@@ -325,11 +324,22 @@ export default class MonkeyMaster {
    * @param {number} [interval=5]   轮询间隔，单位秒
    * @memberof MonkeyMaster
    */
-  async buyInStock(interval = 5) {
+  async buySingleSkuInStock(interval = 5) {
     let isInStock = false;
 
     await this.cancelSelectCartSkus();
-    await this.addCart(this.skuids);
+
+    const cart = await this.getCartInfo();
+    const skuDetails = cart.find(sku => sku.item.Id == this.skuids[0]);
+
+    if (skuDetails) {
+      logger.info(`${this.skuids[0]}在购物车中，尝试勾选ing`);
+      await this.cartItemSelectToggle(skuDetails, 1);
+    } else {
+      logger.info(`${this.skuids[0]}不在购物车中，尝试加车ing`);
+      await this.addCart(this.skuids);
+    }
+
     await this.getOrderInfo();
 
     while (!isInStock) {
@@ -410,16 +420,16 @@ export default class MonkeyMaster {
       body: JSON.stringify(payload),
     });
 
-    let cartInfo = {};
+    let cartInfo = await res.json();
     let vendors = [];
     let ret = [];
 
     try {
-      cartInfo = str2Json(await res.text())['resultData']['cartInfo'];
+      cartInfo = cartInfo['resultData']['cartInfo'];
       vendors = cartInfo['vendors'];
 
       for (let vendor of vendors) {
-        ret.push(vendor['sorted']);
+        ret = ret.concat(vendor['sorted']);
       }
     } catch (error) {}
 
@@ -434,8 +444,47 @@ export default class MonkeyMaster {
       random: random.int(),
     };
 
-    return await fetch(url, {
+    const res = await fetch(url, {
       payload: JSON.stringify(payload),
-    }).then((res) => res.headers.status === 200);
+    });
+
+    this.saveCookie(res.headers.get('set-cookie'));
+    return res.headers.status === 200;
+  }
+
+  /**
+   * 修改购物车中商品勾选切换，并可修改数量
+   * @param {Object} singleItem sku details
+   * @param {Number} count 勾选数量
+   */
+  async cartItemSelectToggle(singleItem, count) {
+    const url = 'https://cart.jd.com/changeNum.action';
+
+    const {
+      item: { olderVendorId, Id, targetId, promoID = '', outSkus = '' },
+      itemType,
+      checkedNum,
+    } = singleItem;
+
+    const payload = {
+      t: 0,
+      venderId: olderVendorId,
+      pid: Id,
+      pcount: count || checkedNum,
+      ptype: itemType,
+      targetId,
+      promoID,
+      outSkus,
+      random: random.int(),
+    };
+
+    this.headers.set('Referer', 'https://cart.jd.com/cart');
+
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }).then((r) => r.json());
+
+    return res['sortedWebCartResult']['achieveSevenState'] == 2;
   }
 }
