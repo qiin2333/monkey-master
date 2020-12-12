@@ -238,7 +238,7 @@ export default class MonkeyMaster {
 
   async submitOrder() {
     const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
-    const { eid, fp, riskControl } = this.options;
+    const { eid, fp, riskControl, password } = this.options;
 
     const payload = {
       overseaPurchaseCookies: '',
@@ -258,8 +258,8 @@ export default class MonkeyMaster {
       'submitOrderParam.needCheck': 1,
     };
 
-    if (orderDeps.password) {
-      payload['submitOrderParam.payPassword'] = encodePwd(orderDeps.password);
+    if (password) {
+      payload['submitOrderParam.payPassword'] = encodePwd(password);
     }
 
     this.headers.set('Host', 'trade.jd.com');
