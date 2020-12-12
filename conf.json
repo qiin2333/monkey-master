@@ -1,11 +1,9 @@
 {
   "timeout": 5000,
   "useRandomUA": false,
-  "notify": true,
-  "sckey": "SCU131284T28c6dd0f3f148cfd540aa265de7709fc5fc4aba379f1f",
   "orderDeps": {
-    "eid": "QFD6L3JGYJZQTNKUR3KL5HXWYM2ZJTTHOIP2USVHEYUSHYILCMXWVMWZZG7NG52LZMHFEUTFRVEJYXIBZO4EOETYOM",
-    "fp": "542e29cb90cb76c5358e3b613371c188",
+    "eid": "LEGEI7V4K22QCVKU27UKR2S6TXVOO2JVWI2PHNAD3FQOJJKOEONUF4OQLL5BNDIZ7EWEZCNDCZIK4NFPV2MQDJY4TU",
+    "fp": "e6ac5709d5ec03efcca4a7d8effa9719",
     "trackId": "TestTrackId",
     "riskControl": "",
     "area": "12_978_2927_58064",
