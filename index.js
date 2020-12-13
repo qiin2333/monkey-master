@@ -4,7 +4,7 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 const CONFIG = await loadJsonFile('conf.json');
 
 const ins = new MonkeyMaster({
-  skuids: prompt('输入抢购skuid,可以是多个，以逗号(,)分割', '100015062660'),
+  skuids: prompt('输入抢购skuid,可以是多个，以逗号(,)分割', '100016691566'),
   areaId: CONFIG.orderDeps.area || prompt('未配置 area, 请输入'),
   eid: CONFIG.orderDeps.eid || prompt('未配置 eid, 请输入'),
   fp: CONFIG.orderDeps.fp || prompt('未配置 fp, 请输入'),

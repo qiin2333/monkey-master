@@ -330,11 +330,17 @@ export default class MonkeyMaster {
     await this.cancelSelectCartSkus();
 
     const cart = await this.getCartInfo();
-    const skuDetails = cart.find(sku => sku.item.Id == this.skuids[0]);
+    const skuDetails = cart.find((sku) => sku.item.Id == this.skuids[0]);
+
+    logger.critical(JSON.stringify(skuDetails));
 
     if (skuDetails) {
       logger.info(`${this.skuids[0]}在购物车中，尝试勾选ing`);
-      await this.cartItemSelectToggle(skuDetails, 1);
+      const isSelected = await this.cartItemSelectToggle(skuDetails, 1);
+
+      if (!isSelected) {
+        return logger.critical('商品勾选失败，检查配置');
+      }
     } else {
       logger.info(`${this.skuids[0]}不在购物车中，尝试加车ing`);
       await this.addCart(this.skuids);
@@ -405,7 +411,7 @@ export default class MonkeyMaster {
 
     const payload = {
       serInfo: {
-        area: this.areaId,
+        area: this.options.areaId,
         'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
       },
       cartExt: {
@@ -441,7 +447,7 @@ export default class MonkeyMaster {
     const payload = {
       t: 0,
       outSkus: '',
-      random: random.int(),
+      random: random.int(1e6, 1e7),
     };
 
     const res = await fetch(url, {
@@ -458,33 +464,43 @@ export default class MonkeyMaster {
    * @param {Number} count 勾选数量
    */
   async cartItemSelectToggle(singleItem, count) {
-    const url = 'https://cart.jd.com/changeNum.action';
-
     const {
-      item: { olderVendorId, Id, targetId, promoID = '', outSkus = '' },
-      itemType,
+      item: { olderVendorId, Id, skuUuid, useUuid },
       checkedNum,
     } = singleItem;
 
     const payload = {
-      t: 0,
-      venderId: olderVendorId,
-      pid: Id,
-      pcount: count || checkedNum,
-      ptype: itemType,
-      targetId,
-      promoID,
-      outSkus,
-      random: random.int(),
+      operations: [
+        {
+          TheSkus: [
+            {
+              Id,
+              num: count || checkedNum,
+              skuUuid,
+              useUuid,
+            },
+          ],
+        },
+      ],
+      serInfo: { area: this.options.areaId },
     };
 
-    this.headers.set('Referer', 'https://cart.jd.com/cart');
+    const url = buildUrl('https://api.m.jd.com/api', {
+      queryParams: {
+        functionId: 'pcCart_jc_changeSkuNum',
+        appid: 'JDC_mall_cart',
+        loginType: 3,
+        body: JSON.stringify(payload),
+      },
+    });
+
+    this.headers.set('Referer', 'https://cart.jd.com/');
 
     const res = await fetch(url, {
       method: 'POST',
-      body: JSON.stringify(payload),
+      headers: this.headers,
     }).then((r) => r.json());
 
-    return res['sortedWebCartResult']['achieveSevenState'] == 2;
+    return res.code === 0;
   }
 }
