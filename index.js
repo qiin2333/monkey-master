@@ -19,7 +19,8 @@ const mode = prompt(
 
 switch (mode) {
   case '1':
-    await ins.buySingleSkuInStock();
+    const interval = prompt('库存监控间隔, 单位秒');
+    await ins.buySingleSkuInStock(interval);
     break;
 
   case '2':

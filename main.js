@@ -277,7 +277,7 @@ export default class MonkeyMaster {
       body: JSON.stringify(payload),
     });
 
-    console.log(await res.text());
+    logger.critical(await res.text());
 
     return res.status === 200;
   }
