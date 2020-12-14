@@ -2,7 +2,7 @@
  *
  */
 export function str2Json(str) {
-  return JSON.parse(str.replace(/^.*{/, '{').replace(/}.*$/, '}'));
+  return JSON.parse(str.replace(/^.*?\(/, '').replace(/\)$/, ''));
 }
 
 /**
@@ -27,4 +27,9 @@ export function encodePwd(pwd) {
     .split()
     .map((char) => 'u3' + char)
     .join();
+}
+
+export function genAreaId(addr) {
+  const { provinceId, cityId, countyId, townId } = addr;
+  return `${provinceId}_${cityId}_${countyId}_${townId}`;
 }

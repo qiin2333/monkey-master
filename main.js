@@ -5,8 +5,16 @@ import { exec } from 'https://deno.land/x/exec/mod.ts';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
+import mFetch from './fetch.js';
 import { logger } from './log.js';
-import { str2Json, getCookie, cookieParse, encodePwd } from './util.js';
+import { getFP } from './browser.js';
+import {
+  str2Json,
+  getCookie,
+  cookieParse,
+  encodePwd,
+  genAreaId,
+} from './util.js';
 
 const random = new Random();
 const DEFAULT_USER_AGENT =
@@ -17,7 +25,7 @@ const skuInfoCache = {};
 export default class MonkeyMaster {
   constructor(options = {}) {
     this.options = options;
-    this.skuids = (options.skuids || '').split(',');
+    this.skuids = options.skuids || [];
     this.userAgent = CONFIG.useRandomUA
       ? this.getRandomUA()
       : DEFAULT_USER_AGENT;
@@ -52,7 +60,7 @@ export default class MonkeyMaster {
       queryParams: { rid: Date.now() },
     });
 
-    const res = await fetch(url);
+    const res = await mFetch(url);
   }
 
   async getQRCode() {
@@ -60,7 +68,7 @@ export default class MonkeyMaster {
       queryParams: { appid: 133, size: 147, t: String(Date.now()) },
     });
 
-    const blob = await fetch(url, {
+    const blob = await mFetch(url, {
       method: 'GET',
       referrer: 'https://passport.jd.com/new/login.aspx',
       headers: this.headers,
@@ -89,7 +97,7 @@ export default class MonkeyMaster {
     // 只能这样写 referer 才能参数正确，JD 后台贱货
     this.headers.set('Referer', 'https://passport.jd.com/');
 
-    let r = await fetch(url, {
+    let r = await mFetch(url, {
       method: 'GET',
       body: null,
       headers: this.headers,
@@ -105,7 +113,7 @@ export default class MonkeyMaster {
   }
 
   async loginByQRCode() {
-    const res = await fetch('https://passport.jd.com/new/login.aspx', {
+    const res = await mFetch('https://passport.jd.com/new/login.aspx', {
       headers: this.headers,
     });
 
@@ -127,7 +135,7 @@ export default class MonkeyMaster {
         'https://passport.jd.com/uc/login?ltype=logout'
       );
 
-      const r = await fetch(
+      const r = await mFetch(
         buildUrl('https://passport.jd.com/uc/qrCodeTicketValidation', {
           queryParams: { t: ticket },
         }),
@@ -157,7 +165,7 @@ export default class MonkeyMaster {
       }
     );
 
-    const res = await fetch(url, {
+    const res = await mFetch(url, {
       method: 'GET',
       headers: this.headers.set(
         'Referer',
@@ -166,6 +174,30 @@ export default class MonkeyMaster {
       // credentials: 'include',
       redirect: 'error',
     });
+
+    const addrs = await this.getUserAddr();
+
+    if (addrs && addrs.length) {
+      this.areaId = genAreaId(addrs[0]);
+      console.log(`area id 获取成功: ${this.areaId}`);
+    }
+  }
+
+  async getUserAddr() {
+    const url = buildUrl('https://cd.jd.com/usual/address', {
+      queryParams: {
+        callback: `jQuery${random.int(1000000, 9999999)}`,
+        _: String(Date.now()),
+      },
+    });
+
+    this.headers.set('Referer', 'https://item.jd.com/');
+
+    const res = await mFetch(url, {
+      headers: this.headers,
+    });
+
+    return str2Json(await res.text());
   }
 
   saveCookie(cookie) {
@@ -198,7 +230,7 @@ export default class MonkeyMaster {
       });
 
       this.headers.set('Referer', `https://item.jd.com/${skuid}.html`);
-      const res = await fetch(url, { headers: this.headers });
+      const res = await mFetch(url, { headers: this.headers });
       const ret = await this.loginCheck(res.url);
 
       if (res.status === 200 && ret) {
@@ -225,20 +257,31 @@ export default class MonkeyMaster {
       }
     );
 
-    const res = await fetch(url);
+    const res = await mFetch(url);
     logger.info(`订单结算页面响应: ${res.status}`);
 
     // TODO: parse fingerprint
-    // const tdjsCode = await fetch('https://gias.jd.com/js/td.js').then((res) =>
+    // const tdjsCode = await mFetch('https://gias.jd.com/js/td.js').then((res) =>
     //   res.text()
     // );
     // new Function('$', tdjsCode)();
     // console.log(_JdJrTdRiskFpInfo);
+    logger.info('获取必要信息中，大约需要30秒');
+    const { fp, eid } = await getFP(this.userAgent);
+    this.fp = fp;
+    this.eid = eid;
+
+    logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
   }
 
   async submitOrder() {
     const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
-    const { eid, fp, riskControl, password } = this.options;
+    const {
+      eid = this.eid,
+      fp = this.fp,
+      riskControl,
+      password,
+    } = this.options;
 
     const payload = {
       overseaPurchaseCookies: '',
@@ -271,7 +314,7 @@ export default class MonkeyMaster {
 
     logger.info(`submit_order req start at ${Date()}`);
 
-    const res = await fetch(url, {
+    const res = await mFetch(url, {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(payload),
@@ -314,7 +357,7 @@ export default class MonkeyMaster {
   }
 
   async timeSyncWithJD() {
-    const res = await fetch('https://a.jd.com//ajax/queryServerData.html');
+    const res = await mFetch('https://a.jd.com//ajax/queryServerData.html');
     return res.headers.get('date');
   }
 
@@ -331,8 +374,6 @@ export default class MonkeyMaster {
 
     const cart = await this.getCartInfo();
     const skuDetails = cart.find((sku) => sku.item.Id == this.skuids[0]);
-
-    logger.critical(JSON.stringify(skuDetails));
 
     if (skuDetails) {
       logger.info(`${this.skuids[0]}在购物车中，尝试勾选ing`);
@@ -388,7 +429,7 @@ export default class MonkeyMaster {
       },
     });
 
-    const res = await fetch(url, { headers: this.headers });
+    const res = await mFetch(url, { headers: this.headers });
     const stockInfo = str2Json(await res.text());
 
     // logger.info(`库存信息: ${stockInfo['skuState']}`);
@@ -421,7 +462,7 @@ export default class MonkeyMaster {
 
     this.headers.set('Referer', 'https://cart.jd.com/');
 
-    const res = await fetch(url, {
+    const res = await mFetch(url, {
       headers: this.headers,
       body: JSON.stringify(payload),
     });
@@ -450,7 +491,7 @@ export default class MonkeyMaster {
       random: random.int(1e6, 1e7),
     };
 
-    const res = await fetch(url, {
+    const res = await mFetch(url, {
       payload: JSON.stringify(payload),
     });
 
@@ -496,7 +537,7 @@ export default class MonkeyMaster {
 
     this.headers.set('Referer', 'https://cart.jd.com/');
 
-    const res = await fetch(url, {
+    const res = await mFetch(url, {
       method: 'POST',
       headers: this.headers,
     }).then((r) => r.json());
