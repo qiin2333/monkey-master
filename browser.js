@@ -8,6 +8,7 @@ const p = await Deno.run({
     '--headless',
     '--remote-debugging-port=8964',
     '--profile-directory=/tmp/pptr/',
+    '--crash-dumps-dir=/tmp/crash/',
     'http://github.com',
   ],
   stdout: 'piped',

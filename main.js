@@ -13,6 +13,7 @@ import {
   getCookie,
   cookieParse,
   encodePwd,
+  obj2qs,
   genAreaId,
 } from './util.js';
 
@@ -267,11 +268,18 @@ export default class MonkeyMaster {
     // new Function('$', tdjsCode)();
     // console.log(_JdJrTdRiskFpInfo);
     logger.info('获取必要信息中，大约需要30秒');
-    const { fp, eid } = await getFP(this.userAgent);
-    this.fp = fp;
-    this.eid = eid;
 
-    logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
+    if (this.options.fp && this.options.eid) {
+      this.fp = this.options.fp;
+      this.eid = this.options.eid;
+    } else {
+      const { fp, eid } = await getFP(this.userAgent);
+      this.fp = fp;
+      this.eid = eid;
+      logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
+    }
+
+    await this.changeOrderAddr(this.areaId);
   }
 
   async submitOrder() {
@@ -291,7 +299,7 @@ export default class MonkeyMaster {
       'submitOrderParam.trackID': 'TestTrackId',
       'submitOrderParam.ignorePriceChange': '0',
       'submitOrderParam.btSupport': '0',
-      riskControl: '',
+      // riskControl: '',
       'submitOrderParam.isBestCoupon': 1,
       'submitOrderParam.jxj': 1,
       'submitOrderParam.trackId': 'TestTrackId',
@@ -305,24 +313,26 @@ export default class MonkeyMaster {
       payload['submitOrderParam.payPassword'] = encodePwd(password);
     }
 
-    this.headers.set('Host', 'trade.jd.com');
-    this.headers.set(
+    const headers = new Headers(this.headers);
+    headers.set('Host', 'trade.jd.com');
+    headers.set(
       'Referer',
       'http://trade.jd.com/shopping/order/getOrderInfo.action'
     );
-    this.headers.set('content-type', 'application/x-www-form-urlencoded');
+    headers.set('content-type', 'application/x-www-form-urlencoded');
 
     logger.info(`submit_order req start at ${Date()}`);
 
     const res = await mFetch(url, {
       method: 'POST',
-      headers: this.headers,
-      body: JSON.stringify(payload),
+      headers,
+      body: obj2qs(payload),
     });
 
-    logger.critical(await res.text());
+    const retJson = await res.json();
+    logger.critical(retJson);
 
-    return res.status === 200;
+    return retJson.success === true;
   }
 
   /**
@@ -390,7 +400,7 @@ export default class MonkeyMaster {
     await this.getOrderInfo();
 
     while (!isInStock) {
-      isInStock = await this.getSkuStockInfo(this.skuids, this.options.areaId);
+      isInStock = await this.getSkuStockInfo(this.skuids, this.areaId);
       logger.debug(`${this.skuids}暂无库存，${interval}秒后再次查询`);
       await sleep(interval);
     }
@@ -400,7 +410,7 @@ export default class MonkeyMaster {
     if (await this.submitOrder()) {
       return true;
     } else {
-      await this.buyInStock(interval);
+      return await this.buySingleSkuInStock(interval);
     }
   }
 
@@ -429,10 +439,10 @@ export default class MonkeyMaster {
       },
     });
 
-    const res = await mFetch(url, { headers: this.headers });
-    const stockInfo = str2Json(await res.text());
+    const res = await mFetch(url, { headers: this.headers, timeout: 5000 });
+    const stockInfo = str2Json(await res.text())[this.skuids[0]];
 
-    // logger.info(`库存信息: ${stockInfo['skuState']}`);
+    logger.info(`库存信息: ${JSON.stringify(stockInfo)}`);
 
     return (
       stockInfo &&
@@ -452,7 +462,7 @@ export default class MonkeyMaster {
 
     const payload = {
       serInfo: {
-        area: this.options.areaId,
+        area: this.areaId,
         'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
       },
       cartExt: {
@@ -523,7 +533,7 @@ export default class MonkeyMaster {
           ],
         },
       ],
-      serInfo: { area: this.options.areaId },
+      serInfo: { area: this.areaId },
     };
 
     const url = buildUrl('https://api.m.jd.com/api', {
@@ -543,5 +553,49 @@ export default class MonkeyMaster {
     }).then((r) => r.json());
 
     return res.code === 0;
+  }
+
+  async changeOrderAddr(areaId) {
+    const [provinceId, cityId, countyId, townId] = areaId
+      .split('_')
+      .map((item) => Number(item));
+
+    const headers = new Headers(this.headers);
+    headers.set('Host', 'trade.jd.com');
+    headers.set(
+      'Referer',
+      'http://trade.jd.com/shopping/order/getOrderInfo.action'
+    );
+    headers.set('content-type', 'application/x-www-form-urlencoded');
+
+    await mFetch(
+      'https://trade.jd.com/shopping/dynamic/consignee/checkOpenConsignee.action',
+      {
+        method: 'POST',
+        headers,
+        body: obj2qs({
+          'consigneeParam.provinceId': provinceId,
+          'consigneeParam.cityId': cityId,
+          'consigneeParam.countyId': countyId,
+          'consigneeParam.townId': townId,
+        }),
+      }
+    );
+
+    await mFetch(
+      'https://trade.jd.com/shopping/dynamic/payAndShip/getAdditShipmentNew.action',
+      {
+        method: 'POST',
+        headers,
+        body: obj2qs({
+          paymentId: 4,
+          'shipParam.reset311': 0,
+          resetFlag: 1000000000,
+          'shipParam.onlinePayType': 0,
+          typeFlag: 1,
+          promiseTagType: '',
+        }),
+      }
+    );
   }
 }

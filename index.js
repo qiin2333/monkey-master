@@ -11,6 +11,7 @@ const skuids = prompt(
 
 const ins = new MonkeyMaster({
   skuids,
+  password: CONFIG.orderDeps.password,
   areaId: CONFIG.orderDeps.area,
   eid: CONFIG.orderDeps.eid,
   fp: CONFIG.orderDeps.fp,
@@ -26,7 +27,10 @@ const mode = prompt(
 switch (mode) {
   case '1':
     const interval = prompt('库存监控间隔, 单位秒');
-    await ins.buySingleSkuInStock(interval);
+    if (await ins.buySingleSkuInStock(interval)) {
+      logger.info('居然买到了');
+      Deno.exit();
+    }
     break;
 
   case '2':

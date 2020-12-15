@@ -24,9 +24,21 @@ export function getCookie(cookieStr, key) {
 
 export function encodePwd(pwd) {
   return String(pwd)
-    .split()
+    .split('')
     .map((char) => 'u3' + char)
-    .join();
+    .join('');
+}
+
+/**
+ *
+ * object params to querystring
+ * @param {Object} obj
+ * @returns
+ */
+export function obj2qs(obj) {
+  return new URLSearchParams(
+    Object.keys(obj).map((k) => [k, obj[k]])
+  ).toString();
 }
 
 export function genAreaId(addr) {
