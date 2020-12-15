@@ -3,7 +3,9 @@ const CONFIG = await loadJsonFile('conf.json');
 
 export default function (url, options = {}) {
   const timeoutPromise = new Promise((resolve, reject) => {
-    setTimeout(resolve, options.timeout || CONFIG.timeout, 'timeout');
+    setTimeout(() => {
+      resolve(new Response(new ReadableStream(), { status: 504, statusText: 'timeout!' }));
+    }, options.timeout || CONFIG.timeout);
   });
   return Promise.race([timeoutPromise, fetch(url, options)]);
 }
