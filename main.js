@@ -439,8 +439,16 @@ export default class MonkeyMaster {
       },
     });
 
-    const res = await mFetch(url, { headers: this.headers, timeout: 5000 });
-    const stockInfo = str2Json(await res.text())[this.skuids[0]];
+    const res = await mFetch(url, {
+      headers: this.headers,
+      timeout: 5000,
+    }).then((r) => r.text());
+    let stockInfo;
+    try {
+      stockInfo = str2Json(res)[this.skuids[0]];
+    } catch (error) {
+      return false;
+    }
 
     logger.info(`库存信息: ${JSON.stringify(stockInfo)}`);
 
