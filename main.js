@@ -272,12 +272,13 @@ export default class MonkeyMaster {
     // );
     // new Function('$', tdjsCode)();
     // console.log(_JdJrTdRiskFpInfo);
-    logger.info('获取必要信息中，大约需要30秒');
 
     if (this.options.fp && this.options.eid) {
       this.fp = this.options.fp;
       this.eid = this.options.eid;
     } else {
+      logger.info('获取必要信息中，大约需要30秒');
+
       const { fp, eid } = await getFP(this.userAgent);
       this.fp = fp;
       this.eid = eid;
@@ -384,13 +385,13 @@ export default class MonkeyMaster {
    */
   async buySingleSkuInStock(interval = 5) {
     const skuid = this.skuids[0];
-    let isInStock = false;
+    let theSkuInStock = false;
 
     await this.prepareToOrder(skuid);
 
-    while (!isInStock) {
+    while (!theSkuInStock) {
       const skuStockInfo = await this.getSkuStockInfo([skuid], this.areaId);
-      isInStock = isInStock(skuStockInfo[skuid]);
+      theSkuInStock = isInStock(skuStockInfo[skuid]);
 
       logger.debug(`${skuid}暂无库存，${interval}秒后再次查询`);
       await sleep(interval);
