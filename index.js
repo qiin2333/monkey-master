@@ -4,10 +4,12 @@ import { logger } from './log.js';
 
 const CONFIG = await loadJsonFile('conf.json');
 
-const skuids = prompt(
+let skuids = prompt(
   '输入抢购skuid,可以是多个，以逗号(,)分割',
   '100016691566'
 ).split(',');
+// 检验合法性
+validateSkuids(skuids);
 
 const ins = new MonkeyMaster({
   skuids,
@@ -44,4 +46,16 @@ switch (mode) {
 
   default:
     break;
+}
+
+function validateSkuids(skuids) {
+  skuids.forEach((itemId) => {
+    if (!/^100/.test(itemId)) {
+      skuids = prompt(
+        '请输入100开头的抢购skuid,可以是多个，以逗号(,)分割',
+        '100016691566'
+      ).split(',');
+      validateSkuids(skuids);
+    }
+  });
 }
