@@ -45,3 +45,16 @@ export function genAreaId(addr) {
   const { provinceId, cityId, countyId, townId } = addr;
   return `${provinceId}_${cityId}_${countyId}_${townId}`;
 }
+
+/**
+ *
+ * @param {Object} skuStockInfo
+ * @returns
+ */
+export function isInStock(skuStockInfo = {}) {
+  return (
+    skuStockInfo &&
+    skuStockInfo['skuState'] === 1 &&
+    [33, 40].includes(skuStockInfo['StockState'])
+  );
+}

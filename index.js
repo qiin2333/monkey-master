@@ -27,10 +27,14 @@ const mode = prompt(
 switch (mode) {
   case '1':
     const interval = prompt('库存监控间隔, 单位秒');
-    if (await ins.buySingleSkuInStock(interval)) {
+    const buyFunc =
+      skuids.length > 1 ? 'buyMultiSkusInStock' : 'buySingleSkuInStock';
+
+    if (await ins[buyFunc](interval)) {
       logger.info('居然买到了');
       Deno.exit();
     }
+
     break;
 
   case '2':

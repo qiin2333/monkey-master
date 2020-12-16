@@ -15,6 +15,7 @@ import {
   encodePwd,
   obj2qs,
   genAreaId,
+  isInStock,
 } from './util.js';
 
 const random = new Random();
@@ -378,40 +379,79 @@ export default class MonkeyMaster {
    * @memberof MonkeyMaster
    */
   async buySingleSkuInStock(interval = 5) {
+    const skuid = this.skuids[0];
     let isInStock = false;
 
-    await this.cancelSelectCartSkus();
-
-    const cart = await this.getCartInfo();
-    const skuDetails = cart.find((sku) => sku.item.Id == this.skuids[0]);
-
-    if (skuDetails) {
-      logger.info(`${this.skuids[0]}在购物车中，尝试勾选ing`);
-      const isSelected = await this.cartItemSelectToggle(skuDetails, 1);
-
-      if (!isSelected) {
-        return logger.critical('商品勾选失败，检查配置');
-      }
-    } else {
-      logger.info(`${this.skuids[0]}不在购物车中，尝试加车ing`);
-      await this.addCart(this.skuids);
-    }
-
-    await this.getOrderInfo();
+    this.prepareToOrder(skuid);
 
     while (!isInStock) {
-      isInStock = await this.getSkuStockInfo(this.skuids, this.areaId);
-      logger.debug(`${this.skuids}暂无库存，${interval}秒后再次查询`);
+      const skuStockInfo = await this.getSkuStockInfo([skuid], this.areaId);
+      isInStock = isInStock(skuStockInfo[skuid]);
+
+      logger.debug(`${skuid}暂无库存，${interval}秒后再次查询`);
       await sleep(interval);
     }
 
-    logger.info(`${this.skuids}好像有货了喔，下单试试`);
+    logger.info(`${skuid}好像有货了喔，下单试试`);
 
     if (await this.submitOrder()) {
       return true;
     } else {
       return await this.buySingleSkuInStock(interval);
     }
+  }
+
+  async buyMultiSkusInStock(interval = 5) {
+    let theSkuInStock = null;
+
+    while (!theSkuInStock) {
+      const skuStockInfo = await this.getSkuStockInfo(this.skuids, this.areaId);
+
+      theSkuInStock = this.skuids.some((skuid) =>
+        isInStock(skuStockInfo[skuid])
+      );
+
+      logger.debug(`${this.skuids}暂无库存，${interval}秒后再次查询`);
+
+      await sleep(interval);
+    }
+
+    logger.info(`${theSkuInStock}好像有货了喔，下单试试`);
+
+    this.prepareToOrder(theSkuInStock);
+
+    if (await this.submitOrder()) {
+      return true;
+    } else {
+      return await this.buyMultiSkusInStock(interval);
+    }
+  }
+
+  /**
+   *
+   * 下单准备（清空-加车-结算）
+   * @param {Number} skuid
+   * @returns
+   */
+  async prepareToOrder(skuid) {
+    await this.cancelSelectCartSkus();
+
+    const cart = await this.getCartInfo();
+    const skuDetails = cart.find((sku) => sku.item.Id == skuid);
+
+    if (skuDetails) {
+      logger.info(`${skuid}在购物车中，尝试勾选ing`);
+      const isSelected = await this.cartItemSelectToggle(skuDetails, 1);
+
+      if (!isSelected) {
+        return logger.critical('商品勾选失败，检查配置');
+      }
+    } else {
+      logger.info(`${skuid}不在购物车中，尝试加车ing`);
+      await this.addCart(this.skuids);
+    }
+
+    await this.getOrderInfo();
   }
 
   async loginCheck(url) {
@@ -443,20 +483,16 @@ export default class MonkeyMaster {
       headers: this.headers,
       timeout: 5000,
     }).then((r) => r.text());
-    let stockInfo;
+    let stockInfo = {};
     try {
-      stockInfo = str2Json(res)[this.skuids[0]];
+      stockInfo = str2Json(res);
     } catch (error) {
       return false;
     }
 
     logger.info(`库存信息: ${JSON.stringify(stockInfo)}`);
 
-    return (
-      stockInfo &&
-      stockInfo['skuState'] === 1 &&
-      [33, 40].includes(stockInfo['StockState'])
-    );
+    return stockInfo;
   }
 
   async getCartInfo() {
