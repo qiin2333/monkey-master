@@ -3,9 +3,13 @@ root = true
 # 对所有文件生效
 [*]
 charset = utf-8
+# 缩进类型
 indent_style = space
 indent_size = 4
+# 换行符格式
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
+# 使用单引号
+quote_type = single
 

@@ -1,13 +1,26 @@
-import { osType, isWindows } from "https://deno.land/std@0.80.0/_util/os.ts";
-import { buildUrl } from "https://deno.land/x/url_builder/mod.ts";
-import { sleep } from "https://deno.land/x/sleep/mod.ts";
-import { exec } from "https://deno.land/x/exec/mod.ts";
-import Random from "https://deno.land/x/random@v1.1.2/Random.js";
-import loadJsonFile from "https://deno.land/x/load_json_file@v1.0.0/mod.ts";
+import {
+    osType,
+    isWindows
+} from 'https://deno.land/std@0.80.0/_util/os.ts';
+import {
+    buildUrl
+} from 'https://deno.land/x/url_builder/mod.ts';
+import {
+    sleep
+} from 'https://deno.land/x/sleep/mod.ts';
+import {
+    exec
+} from 'https://deno.land/x/exec/mod.ts';
+import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
+import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
-import mFetch from "./fetch.js";
-import { logger } from "./log.js";
-import { getFP } from "./browser.js";
+import mFetch from './fetch.js';
+import {
+    logger
+} from './log.js';
+import {
+    getFP
+} from './browser.js';
 import {
     str2Json,
     getCookie,
@@ -16,41 +29,41 @@ import {
     obj2qs,
     genAreaId,
     isInStock,
-} from "./util.js";
+} from './util.js';
 
 const random = new Random();
 const DEFAULT_USER_AGENT =
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36";
-const CONFIG = await loadJsonFile("conf.json");
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.88 Safari/537.36';
+const CONFIG = await loadJsonFile('conf.json');
 const skuInfoCache = {};
 
 export default class MonkeyMaster {
     constructor(options = {}) {
         this.options = options;
         this.skuids = options.skuids || [];
-        this.userAgent = CONFIG.useRandomUA
-            ? this.getRandomUA()
-            : DEFAULT_USER_AGENT;
+        this.userAgent = CONFIG.useRandomUA ?
+            this.getRandomUA() :
+            DEFAULT_USER_AGENT;
         this.headers = new Headers({
-            "User-Agent": this.userAgent,
-            "cache-control": "no-cache",
-            "x-requested-with": "XMLHttpRequest",
+            'User-Agent': this.userAgent,
+            'cache-control': 'no-cache',
+            'x-requested-with': 'XMLHttpRequest',
         });
-        this.userPath = CONFIG.userPath || "./cookies/";
+        this.userPath = CONFIG.userPath || './cookies/';
         this.isLogged = false;
     }
 
     async init() {
-        const cookieText = Deno.readTextFileSync(this.userPath + "data");
+        const cookieText = Deno.readTextFileSync(this.userPath + 'data');
 
-        this.headers.set("Cookie", cookieText);
+        this.headers.set('Cookie', cookieText);
         this.isLogged = await this.validateCookies();
 
         while (!this.isLogged) {
             this.isLogged = await this.loginByQRCode();
         }
 
-        logger.info("登录成功了，来造作吧！");
+        logger.info('登录成功了，来造作吧！');
 
         await this.getUserInfo();
     }
@@ -60,50 +73,58 @@ export default class MonkeyMaster {
     }
 
     async validateCookies() {
-        const url = buildUrl("https://order.jd.com/center/list.action", {
-            queryParams: { rid: Date.now() },
+        const url = buildUrl('https://order.jd.com/center/list.action', {
+            queryParams: {
+                rid: Date.now()
+            },
         });
 
-        const res = await mFetch(url, { headers: this.headers });
+        const res = await mFetch(url, {
+            headers: this.headers
+        });
         return await this.loginCheck(res.url);
     }
 
     async getQRCode() {
-        const url = buildUrl("https://qr.m.jd.com/show", {
-            queryParams: { appid: 133, size: 147, t: String(Date.now()) },
+        const url = buildUrl('https://qr.m.jd.com/show', {
+            queryParams: {
+                appid: 133,
+                size: 147,
+                t: String(Date.now())
+            },
         });
 
         const blob = await mFetch(url, {
-            method: "GET",
-            referrer: "https://passport.jd.com/new/login.aspx",
+            method: 'GET',
+            referrer: 'https://passport.jd.com/new/login.aspx',
             headers: this.headers,
         }).then((res) => {
-            this.saveCookie(res.headers.get("set-cookie"));
+            this.saveCookie(res.headers.get('set-cookie'));
             return res.blob();
         });
 
         console.log(blob.size);
         const buffer = await blob.arrayBuffer();
         const unit8arr = new Deno.Buffer(buffer).bytes();
-        Deno.writeFileSync("qrcode.png", unit8arr);
-        return await exec(`${isWindows ? "cmd /c" : "open"} qrcode.png`);
+        Deno.writeFileSync('qrcode.png', unit8arr);
+        return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
     }
 
     async getQRCodeTicket() {
-        const url = buildUrl("https://qr.m.jd.com/check", {
+        const url = buildUrl('https://qr.m.jd.com/check', {
             queryParams: {
                 callback: `jQuery${random.int(1000000, 9999999)}`,
                 appid: 133,
-                token: getCookie(this.headers.get("Cookie"), "wlfstk_smdl"),
+                token: getCookie(this.headers.get('Cookie'), 'wlfstk_smdl'),
                 _: String(Date.now()),
             },
         });
 
         // 只能这样写 referer 才能参数正确，JD 后台贱货
-        this.headers.set("Referer", "https://passport.jd.com/");
+        this.headers.set('Referer', 'https://passport.jd.com/');
 
         let r = await mFetch(url, {
-            method: "GET",
+            method: 'GET',
             body: null,
             headers: this.headers,
         }).then((res) => res.text());
@@ -118,7 +139,7 @@ export default class MonkeyMaster {
     }
 
     async loginByQRCode() {
-        const res = await mFetch("https://passport.jd.com/new/login.aspx", {
+        const res = await mFetch('https://passport.jd.com/new/login.aspx', {
             headers: this.headers,
         });
 
@@ -136,21 +157,22 @@ export default class MonkeyMaster {
         // 校验 ticket
         if (ticket) {
             this.headers.set(
-                "Referer",
-                "https://passport.jd.com/uc/login?ltype=logout"
+                'Referer',
+                'https://passport.jd.com/uc/login?ltype=logout'
             );
 
             const r = await mFetch(
-                buildUrl("https://passport.jd.com/uc/qrCodeTicketValidation", {
-                    queryParams: { t: ticket },
-                }),
-                {
-                    method: "GET",
+                buildUrl('https://passport.jd.com/uc/qrCodeTicketValidation', {
+                    queryParams: {
+                        t: ticket
+                    },
+                }), {
+                    method: 'GET',
                     headers: this.headers,
-                    credentials: "include",
+                    credentials: 'include',
                 }
             ).then((res) => {
-                this.saveCookie(res.headers.get("set-cookie"));
+                this.saveCookie(res.headers.get('set-cookie'));
                 return res;
             });
 
@@ -161,8 +183,7 @@ export default class MonkeyMaster {
 
     async getUserInfo() {
         const url = buildUrl(
-            "https://passport.jd.com/user/petName/getUserInfoForMiniJd.action",
-            {
+            'https://passport.jd.com/user/petName/getUserInfoForMiniJd.action', {
                 queryParams: {
                     callback: `jQuery${random.int(1000000, 9999999)}`,
                     _: String(Date.now()),
@@ -171,13 +192,13 @@ export default class MonkeyMaster {
         );
 
         const res = await mFetch(url, {
-            method: "GET",
+            method: 'GET',
             headers: this.headers.set(
-                "Referer",
-                "https://order.jd.com/center/list.action"
+                'Referer',
+                'https://order.jd.com/center/list.action'
             ),
             // credentials: 'include',
-            redirect: "error",
+            redirect: 'error',
         });
 
         const addrs = await this.getUserAddr();
@@ -190,14 +211,14 @@ export default class MonkeyMaster {
     }
 
     async getUserAddr() {
-        const url = buildUrl("https://cd.jd.com/usual/address", {
+        const url = buildUrl('https://cd.jd.com/usual/address', {
             queryParams: {
                 callback: `jQuery${random.int(1000000, 9999999)}`,
                 _: String(Date.now()),
             },
         });
 
-        this.headers.set("Referer", "https://item.jd.com/");
+        this.headers.set('Referer', 'https://item.jd.com/');
 
         const res = await mFetch(url, {
             headers: this.headers,
@@ -208,16 +229,16 @@ export default class MonkeyMaster {
 
     saveCookie(cookie) {
         if (cookie === null) return;
-        const oldCookie = this.headers.get("Cookie");
+        const oldCookie = this.headers.get('Cookie');
         let newCookie = cookieParse(cookie);
 
         if (oldCookie) {
-            newCookie = oldCookie + "; " + newCookie;
+            newCookie = oldCookie + '; ' + newCookie;
         }
 
-        Deno.writeTextFileSync(this.userPath + "data", newCookie);
+        Deno.writeTextFileSync(this.userPath + 'data', newCookie);
 
-        return this.headers.set("Cookie", newCookie);
+        return this.headers.set('Cookie', newCookie);
     }
 
     /**
@@ -225,8 +246,11 @@ export default class MonkeyMaster {
      * @param {Array} skuids
      */
     async addCart(skuids = []) {
-        let url = "https://cart.jd.com/gate.action";
-        const payload = { pcount: 1, ptype: 1 };
+        let url = 'https://cart.jd.com/gate.action';
+        const payload = {
+            pcount: 1,
+            ptype: 1
+        };
 
         for (let skuid of skuids) {
             url = buildUrl(url, {
@@ -236,8 +260,10 @@ export default class MonkeyMaster {
                 },
             });
 
-            this.headers.set("Referer", `https://item.jd.com/${skuid}.html`);
-            const res = await mFetch(url, { headers: this.headers });
+            this.headers.set('Referer', `https://item.jd.com/${skuid}.html`);
+            const res = await mFetch(url, {
+                headers: this.headers
+            });
             const ret = await this.loginCheck(res.url);
 
             if (res.status === 200 && ret) {
@@ -256,8 +282,7 @@ export default class MonkeyMaster {
      */
     async getOrderInfo() {
         const url = buildUrl(
-            "http://trade.jd.com/shopping/order/getOrderInfo.action",
-            {
+            'http://trade.jd.com/shopping/order/getOrderInfo.action', {
                 queryParams: {
                     rid: String(Date.now()),
                 },
@@ -278,9 +303,12 @@ export default class MonkeyMaster {
             this.fp = this.options.fp;
             this.eid = this.options.eid;
         } else {
-            logger.info("获取必要信息中，大约需要30秒");
+            logger.info('获取必要信息中，大约需要30秒');
 
-            const { fp, eid } = await getFP(this.userAgent);
+            const {
+                fp,
+                eid
+            } = await getFP(this.userAgent);
             this.fp = fp;
             this.eid = eid;
             logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
@@ -290,48 +318,48 @@ export default class MonkeyMaster {
     }
 
     async submitOrder() {
-        const url = "https://trade.jd.com/shopping/order/submitOrder.action";
+        const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
         const {
             eid = this.eid,
-            fp = this.fp,
-            riskControl,
-            password,
+                fp = this.fp,
+                riskControl,
+                password,
         } = this.options;
 
         const payload = {
-            overseaPurchaseCookies: "",
-            vendorRemarks: "[]",
-            "submitOrderParam.sopNotPutInvoice": "false",
+            overseaPurchaseCookies: '',
+            vendorRemarks: '[]',
+            'submitOrderParam.sopNotPutInvoice': 'false',
             // 'submitOrderParam.presalePayType': 1,   # 预售
-            "submitOrderParam.trackID": "TestTrackId",
-            "submitOrderParam.ignorePriceChange": "0",
-            "submitOrderParam.btSupport": "0",
+            'submitOrderParam.trackID': 'TestTrackId',
+            'submitOrderParam.ignorePriceChange': '0',
+            'submitOrderParam.btSupport': '0',
             // riskControl: '',
-            "submitOrderParam.isBestCoupon": 1,
-            "submitOrderParam.jxj": 1,
-            "submitOrderParam.trackId": "TestTrackId",
+            'submitOrderParam.isBestCoupon': 1,
+            'submitOrderParam.jxj': 1,
+            'submitOrderParam.trackId': 'TestTrackId',
             // 'submitOrderParam.payType4YuShou': 1,    # 预售
-            "submitOrderParam.eid": eid,
-            "submitOrderParam.fp": fp,
-            "submitOrderParam.needCheck": 1,
+            'submitOrderParam.eid': eid,
+            'submitOrderParam.fp': fp,
+            'submitOrderParam.needCheck': 1,
         };
 
         if (password) {
-            payload["submitOrderParam.payPassword"] = encodePwd(password);
+            payload['submitOrderParam.payPassword'] = encodePwd(password);
         }
 
         const headers = new Headers(this.headers);
-        headers.set("Host", "trade.jd.com");
+        headers.set('Host', 'trade.jd.com');
         headers.set(
-            "Referer",
-            "http://trade.jd.com/shopping/order/getOrderInfo.action"
+            'Referer',
+            'http://trade.jd.com/shopping/order/getOrderInfo.action'
         );
-        headers.set("content-type", "application/x-www-form-urlencoded");
+        headers.set('content-type', 'application/x-www-form-urlencoded');
 
         logger.info(`submit_order req start at ${Date()}`);
 
         const res = await mFetch(url, {
-            method: "POST",
+            method: 'POST',
             headers,
             body: obj2qs(payload),
         });
@@ -374,8 +402,8 @@ export default class MonkeyMaster {
     }
 
     async timeSyncWithJD() {
-        const res = await mFetch("https://a.jd.com//ajax/queryServerData.html");
-        return res.headers.get("date");
+        const res = await mFetch('https://a.jd.com//ajax/queryServerData.html');
+        return res.headers.get('date');
     }
 
     /**
@@ -456,7 +484,7 @@ export default class MonkeyMaster {
             const isSelected = await this.cartItemSelectToggle(skuDetails, 1);
 
             if (!isSelected) {
-                return logger.critical("商品勾选失败，检查配置");
+                return logger.critical('商品勾选失败，检查配置');
             }
         } else {
             logger.info(`${skuid}不在购物车中，尝试加车ing`);
@@ -481,11 +509,11 @@ export default class MonkeyMaster {
      * @param {String} areaId
      */
     async getSkuStockInfo(skuids, areaId) {
-        const url = buildUrl("https://c0.3.cn/stocks", {
+        const url = buildUrl('https://c0.3.cn/stocks', {
             queryParams: {
                 callback: `jQuery${random.int(1000000, 9999999)}`,
-                type: "getstocks",
-                skuIds: skuids.join(","),
+                type: 'getstocks',
+                skuIds: skuids.join(','),
                 area: areaId,
                 _: String(Date.now()),
             },
@@ -508,10 +536,10 @@ export default class MonkeyMaster {
     }
 
     async getCartInfo() {
-        const url = buildUrl("https://api.m.jd.com/api", {
+        const url = buildUrl('https://api.m.jd.com/api', {
             queryParams: {
-                functionId: "pcCart_jc_getCurrentCart",
-                appid: "JDC_mall_cart",
+                functionId: 'pcCart_jc_getCurrentCart',
+                appid: 'JDC_mall_cart',
                 loginType: 3,
             },
         });
@@ -519,14 +547,14 @@ export default class MonkeyMaster {
         const payload = {
             serInfo: {
                 area: this.areaId,
-                "user-key": getCookie(this.headers.get("Cookie"), "user-key"),
+                'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
             },
             cartExt: {
                 specialId: 1,
             },
         };
 
-        this.headers.set("Referer", "https://cart.jd.com/");
+        this.headers.set('Referer', 'https://cart.jd.com/');
 
         const res = await mFetch(url, {
             headers: this.headers,
@@ -538,11 +566,11 @@ export default class MonkeyMaster {
         let ret = [];
 
         try {
-            cartInfo = cartInfo["resultData"]["cartInfo"];
-            vendors = cartInfo["vendors"];
+            cartInfo = cartInfo['resultData']['cartInfo'];
+            vendors = cartInfo['vendors'];
 
             for (let vendor of vendors) {
-                ret = ret.concat(vendor["sorted"]);
+                ret = ret.concat(vendor['sorted']);
             }
         } catch (error) {}
 
@@ -550,10 +578,10 @@ export default class MonkeyMaster {
     }
 
     async cancelSelectCartSkus() {
-        const url = "https://cart.jd.com/cancelAllItem.action";
+        const url = 'https://cart.jd.com/cancelAllItem.action';
         const payload = {
             t: 0,
-            outSkus: "",
+            outSkus: '',
             random: random.int(1e6, 1e7),
         };
 
@@ -561,7 +589,7 @@ export default class MonkeyMaster {
             payload: JSON.stringify(payload),
         });
 
-        this.saveCookie(res.headers.get("set-cookie"));
+        this.saveCookie(res.headers.get('set-cookie'));
         return res.headers.status === 200;
     }
 
@@ -572,39 +600,42 @@ export default class MonkeyMaster {
      */
     async cartItemSelectToggle(singleItem, count) {
         const {
-            item: { olderVendorId, Id, skuUuid, useUuid },
+            item: {
+                olderVendorId,
+                Id,
+                skuUuid,
+                useUuid
+            },
             checkedNum,
         } = singleItem;
 
         const payload = {
-            operations: [
-                {
-                    TheSkus: [
-                        {
-                            Id,
-                            num: count || checkedNum,
-                            skuUuid,
-                            useUuid,
-                        },
-                    ],
-                },
-            ],
-            serInfo: { area: this.areaId },
+            operations: [{
+                TheSkus: [{
+                    Id,
+                    num: count || checkedNum,
+                    skuUuid,
+                    useUuid,
+                }, ],
+            }, ],
+            serInfo: {
+                area: this.areaId
+            },
         };
 
-        const url = buildUrl("https://api.m.jd.com/api", {
+        const url = buildUrl('https://api.m.jd.com/api', {
             queryParams: {
-                functionId: "pcCart_jc_changeSkuNum",
-                appid: "JDC_mall_cart",
+                functionId: 'pcCart_jc_changeSkuNum',
+                appid: 'JDC_mall_cart',
                 loginType: 3,
                 body: JSON.stringify(payload),
             },
         });
 
-        this.headers.set("Referer", "https://cart.jd.com/");
+        this.headers.set('Referer', 'https://cart.jd.com/');
 
         const res = await mFetch(url, {
-            method: "POST",
+            method: 'POST',
             headers: this.headers,
         }).then((r) => r.json());
 
@@ -613,33 +644,32 @@ export default class MonkeyMaster {
 
     async changeOrderAddr(areaId) {
         const [provinceId, cityId, countyId, townId] = areaId
-            .split("_")
+            .split('_')
             .map((item) => Number(item));
 
         const headers = new Headers(this.headers);
-        headers.set("Host", "trade.jd.com");
+        headers.set('Host', 'trade.jd.com');
         headers.set(
-            "Referer",
-            "http://trade.jd.com/shopping/order/getOrderInfo.action"
+            'Referer',
+            'http://trade.jd.com/shopping/order/getOrderInfo.action'
         );
-        headers.set("content-type", "application/x-www-form-urlencoded");
+        headers.set('content-type', 'application/x-www-form-urlencoded');
 
         await mFetch(
-            "https://trade.jd.com/shopping/dynamic/consignee/saveConsignee.action",
-            {
-                method: "POST",
+            'https://trade.jd.com/shopping/dynamic/consignee/saveConsignee.action', {
+                method: 'POST',
                 headers,
                 body: obj2qs({
-                    "consigneeParam.newId": this.addr.id,
-                    "consigneeParam.type": null,
-                    "consigneeParam.commonConsigneeSize": 20,
-                    "consigneeParam.isUpdateCommonAddress": 0,
-                    "consigneeParam.giftSenderConsigneeName": "",
-                    "consigneeParam.giftSendeConsigneeMobile": "",
-                    "consigneeParam.noteGiftSender": false,
-                    "consigneeParam.isSelfPick": 0,
-                    "consigneeParam.selfPickOptimize": 0,
-                    "consigneeParam.pickType": 0,
+                    'consigneeParam.newId': this.addr.id,
+                    'consigneeParam.type': null,
+                    'consigneeParam.commonConsigneeSize': 20,
+                    'consigneeParam.isUpdateCommonAddress': 0,
+                    'consigneeParam.giftSenderConsigneeName': '',
+                    'consigneeParam.giftSendeConsigneeMobile': '',
+                    'consigneeParam.noteGiftSender': false,
+                    'consigneeParam.isSelfPick': 0,
+                    'consigneeParam.selfPickOptimize': 0,
+                    'consigneeParam.pickType': 0,
                 }),
             }
         );
