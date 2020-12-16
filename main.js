@@ -14,13 +14,13 @@ import {
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
-import mFetch from './fetch.js';
+import mFetch from './util/fetch.js';
 import {
     logger
-} from './log.js';
+} from './util/log.js';
 import {
     getFP
-} from './browser.js';
+} from './util/browser.js';
 import {
     str2Json,
     getCookie,
@@ -29,7 +29,7 @@ import {
     obj2qs,
     genAreaId,
     isInStock,
-} from './util.js';
+} from './util/util.js';
 
 const random = new Random();
 const DEFAULT_USER_AGENT =
