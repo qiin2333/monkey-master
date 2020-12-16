@@ -38,17 +38,19 @@ export default class MonkeyMaster {
     });
     this.userPath = CONFIG.userPath || './cookies/';
     this.isLogged = false;
-    this.headers.set('Cookie', '');
   }
 
   async init() {
-    await this.validateCookies();
-    const islogin = await this.loginByQRCode();
-    if (islogin) {
-      logger.info('登录成功了，来造作吧！');
-    } else {
-      return logger.error('登录失败');
+    const cookieText = Deno.readTextFileSync(this.userPath + 'data');
+
+    this.headers.set('Cookie', cookieText);
+    this.isLogged = await this.validateCookies();
+
+    while (!this.isLogged) {
+      this.isLogged = await this.loginByQRCode();
     }
+
+    logger.info('登录成功了，来造作吧！');
 
     await this.getUserInfo();
   }
@@ -62,7 +64,8 @@ export default class MonkeyMaster {
       queryParams: { rid: Date.now() },
     });
 
-    const res = await mFetch(url);
+    const res = await mFetch(url, { headers: this.headers });
+    return await this.loginCheck(res.url);
   }
 
   async getQRCode() {
@@ -211,8 +214,9 @@ export default class MonkeyMaster {
       newCookie = oldCookie + '; ' + newCookie;
     }
 
+    Deno.writeTextFileSync(this.userPath + 'data', newCookie);
+
     return this.headers.set('Cookie', newCookie);
-    // this.headers['Cookie'] = cookie;
   }
 
   /**
@@ -382,7 +386,7 @@ export default class MonkeyMaster {
     const skuid = this.skuids[0];
     let isInStock = false;
 
-    this.prepareToOrder(skuid);
+    await this.prepareToOrder(skuid);
 
     while (!isInStock) {
       const skuStockInfo = await this.getSkuStockInfo([skuid], this.areaId);
@@ -407,7 +411,7 @@ export default class MonkeyMaster {
     while (!theSkuInStock) {
       const skuStockInfo = await this.getSkuStockInfo(this.skuids, this.areaId);
 
-      theSkuInStock = this.skuids.some((skuid) =>
+      theSkuInStock = this.skuids.find((skuid) =>
         isInStock(skuStockInfo[skuid])
       );
 
@@ -418,7 +422,7 @@ export default class MonkeyMaster {
 
     logger.info(`${theSkuInStock}好像有货了喔，下单试试`);
 
-    this.prepareToOrder(theSkuInStock);
+    await this.prepareToOrder(theSkuInStock);
 
     if (await this.submitOrder()) {
       return true;
@@ -448,14 +452,14 @@ export default class MonkeyMaster {
       }
     } else {
       logger.info(`${skuid}不在购物车中，尝试加车ing`);
-      await this.addCart(this.skuids);
+      await this.addCart([skuid]);
     }
 
     await this.getOrderInfo();
   }
 
   async loginCheck(url) {
-    if (/login\.aspx/g.test(url)) {
+    if (/(login|passport)/g.test(url)) {
       return await this.loginByQRCode();
     } else {
       return true;
