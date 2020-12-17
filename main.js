@@ -89,10 +89,10 @@ export default class MonkeyMaster {
             return res.blob();
         });
 
-        console.log(blob.size);
         const buffer = await blob.arrayBuffer();
         const unit8arr = new Deno.Buffer(buffer).bytes();
         Deno.writeFileSync('qrcode.png', unit8arr);
+        
         return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
     }
 
@@ -352,32 +352,34 @@ export default class MonkeyMaster {
         if (!time) return;
         const setTimeStamp = Date.parse(time);
         const runOrder = async () => {
-            await this.cancelSelectCartSkus();
             await this.addCart(this.skuids);
             await this.getOrderInfo();
             await this.submitOrder();
         };
 
-        // let now = Date.now();
-        let jdTime = Date.parse(await this.timeSyncWithJD());
-
+        let jdTime = await this.timeSyncWithJD();
         let timer = setTimeout(runOrder, setTimeStamp - jdTime);
 
+        await this.cancelSelectCartSkus();
+
         while (setTimeStamp > jdTime) {
+            logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
+
             // 30秒同步一次时间
             await sleep(30);
             clearTimeout(timer);
-
-            jdTime = Date.parse(await this.timeSyncWithJD());
+            jdTime = await this.timeSyncWithJD();
             timer = setTimeout(runOrder, setTimeStamp - jdTime);
-
-            logger.info(`距离抢购还剩 ${setTimeStamp - jdTime} 秒`);
         }
     }
 
     async timeSyncWithJD() {
+        const syncStartTime = Date.now();
         const res = await mFetch('https://a.jd.com//ajax/queryServerData.html');
-        return res.headers.get('date');
+        const { serverTime } = await res.json();
+        const syncEndTime = Date.now();
+
+        return serverTime + (syncEndTime - syncStartTime) / 2;
     }
 
     /**
