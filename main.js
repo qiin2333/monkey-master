@@ -42,13 +42,18 @@ export default class MonkeyMaster {
     }
 
     async init() {
-        const cookieText = Deno.readTextFileSync(this.userPath + 'data');
+        let cookieText = '';
 
-        this.headers.set('Cookie', cookieText);
-        this.isLogged = await this.validateCookies();
+        try {
+            cookieText = Deno.readTextFileSync(this.userPath + 'data');
+        } catch (error) {}
+
+        if (cookieText) {
+            this.headers.set('Cookie', cookieText);
+            this.isLogged = await this.validateCookies();
+        }
 
         while (!this.isLogged) {
-            this.headers.set('Cookie', '');
             this.isLogged = await this.loginByQRCode();
         }
 
@@ -92,7 +97,7 @@ export default class MonkeyMaster {
         const buffer = await blob.arrayBuffer();
         const unit8arr = new Deno.Buffer(buffer).bytes();
         Deno.writeFileSync('qrcode.png', unit8arr);
-        
+
         return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
     }
 
@@ -128,6 +133,8 @@ export default class MonkeyMaster {
         const res = await mFetch('https://passport.jd.com/new/login.aspx', {
             headers: this.headers,
         });
+
+        this.headers.set('Cookie', '');
 
         await this.getQRCode();
 
@@ -536,6 +543,8 @@ export default class MonkeyMaster {
             headers: this.headers,
             body: JSON.stringify(payload),
         });
+
+        console.log(res.url);
 
         let cartInfo = await res.json();
         let vendors = [];
