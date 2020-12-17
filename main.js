@@ -1,26 +1,14 @@
-import {
-    osType,
-    isWindows
-} from 'https://deno.land/std@0.80.0/_util/os.ts';
-import {
-    buildUrl
-} from 'https://deno.land/x/url_builder/mod.ts';
-import {
-    sleep
-} from 'https://deno.land/x/sleep/mod.ts';
-import {
-    exec
-} from 'https://deno.land/x/exec/mod.ts';
+import { osType, isWindows } from 'https://deno.land/std@0.80.0/_util/os.ts';
+import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
+import { sleep } from 'https://deno.land/x/sleep/mod.ts';
+import { exec } from 'https://deno.land/x/exec/mod.ts';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
 import mFetch from './util/fetch.js';
-import {
-    logger
-} from './util/log.js';
-import {
-    getFP
-} from './util/browser.js';
+import { logger } from './util/log.js';
+import { getFP } from './util/browser.js';
+
 import {
     str2Json,
     getCookie,
@@ -41,9 +29,9 @@ export default class MonkeyMaster {
     constructor(options = {}) {
         this.options = options;
         this.skuids = options.skuids || [];
-        this.userAgent = CONFIG.useRandomUA ?
-            this.getRandomUA() :
-            DEFAULT_USER_AGENT;
+        this.userAgent = CONFIG.useRandomUA
+            ? this.getRandomUA()
+            : DEFAULT_USER_AGENT;
         this.headers = new Headers({
             'User-Agent': this.userAgent,
             'cache-control': 'no-cache',
@@ -60,6 +48,7 @@ export default class MonkeyMaster {
         this.isLogged = await this.validateCookies();
 
         while (!this.isLogged) {
+            this.headers.set('Cookie', '');
             this.isLogged = await this.loginByQRCode();
         }
 
@@ -73,16 +62,13 @@ export default class MonkeyMaster {
     }
 
     async validateCookies() {
-        const url = buildUrl('https://order.jd.com/center/list.action', {
-            queryParams: {
-                rid: Date.now()
-            },
+        const url = 'https://order.jd.com/center/list.action';
+        const res = await mFetch(`${url}?rid=${Date.now()}`, {
+            headers: this.headers,
         });
-
-        const res = await mFetch(url, {
-            headers: this.headers
-        });
-        return await this.loginCheck(res.url);
+        return (
+            /order\.jd\.com/.test(res.url) && (await this.loginCheck(res.url))
+        );
     }
 
     async getQRCode() {
@@ -90,7 +76,7 @@ export default class MonkeyMaster {
             queryParams: {
                 appid: 133,
                 size: 147,
-                t: String(Date.now())
+                t: String(Date.now()),
             },
         });
 
@@ -162,11 +148,8 @@ export default class MonkeyMaster {
             );
 
             const r = await mFetch(
-                buildUrl('https://passport.jd.com/uc/qrCodeTicketValidation', {
-                    queryParams: {
-                        t: ticket
-                    },
-                }), {
+                `https://passport.jd.com/uc/qrCodeTicketValidation?t=${ticket}`,
+                {
                     method: 'GET',
                     headers: this.headers,
                     credentials: 'include',
@@ -183,7 +166,8 @@ export default class MonkeyMaster {
 
     async getUserInfo() {
         const url = buildUrl(
-            'https://passport.jd.com/user/petName/getUserInfoForMiniJd.action', {
+            'https://passport.jd.com/user/petName/getUserInfoForMiniJd.action',
+            {
                 queryParams: {
                     callback: `jQuery${random.int(1000000, 9999999)}`,
                     _: String(Date.now()),
@@ -220,9 +204,7 @@ export default class MonkeyMaster {
 
         this.headers.set('Referer', 'https://item.jd.com/');
 
-        const res = await mFetch(url, {
-            headers: this.headers,
-        });
+        const res = await mFetch(url, { headers: this.headers });
 
         return str2Json(await res.text());
     }
@@ -249,7 +231,7 @@ export default class MonkeyMaster {
         let url = 'https://cart.jd.com/gate.action';
         const payload = {
             pcount: 1,
-            ptype: 1
+            ptype: 1,
         };
 
         for (let skuid of skuids) {
@@ -262,7 +244,7 @@ export default class MonkeyMaster {
 
             this.headers.set('Referer', `https://item.jd.com/${skuid}.html`);
             const res = await mFetch(url, {
-                headers: this.headers
+                headers: this.headers,
             });
             const ret = await this.loginCheck(res.url);
 
@@ -281,15 +263,9 @@ export default class MonkeyMaster {
      * 订单结算页
      */
     async getOrderInfo() {
-        const url = buildUrl(
-            'http://trade.jd.com/shopping/order/getOrderInfo.action', {
-                queryParams: {
-                    rid: String(Date.now()),
-                },
-            }
-        );
+        const url = 'http://trade.jd.com/shopping/order/getOrderInfo.action';
+        const res = await mFetch(`${url}?rid=${Date.now()}`);
 
-        const res = await mFetch(url);
         logger.info(`订单结算页面响应: ${res.status}`);
 
         // TODO: parse fingerprint
@@ -305,12 +281,10 @@ export default class MonkeyMaster {
         } else {
             logger.info('获取必要信息中，大约需要30秒');
 
-            const {
-                fp,
-                eid
-            } = await getFP(this.userAgent);
+            const { fp, eid } = await getFP(this.userAgent);
             this.fp = fp;
             this.eid = eid;
+
             logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
         }
 
@@ -321,9 +295,9 @@ export default class MonkeyMaster {
         const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
         const {
             eid = this.eid,
-                fp = this.fp,
-                riskControl,
-                password,
+            fp = this.fp,
+            riskControl,
+            password,
         } = this.options;
 
         const payload = {
@@ -600,26 +574,25 @@ export default class MonkeyMaster {
      */
     async cartItemSelectToggle(singleItem, count) {
         const {
-            item: {
-                olderVendorId,
-                Id,
-                skuUuid,
-                useUuid
-            },
+            item: { olderVendorId, Id, skuUuid, useUuid },
             checkedNum,
         } = singleItem;
 
         const payload = {
-            operations: [{
-                TheSkus: [{
-                    Id,
-                    num: count || checkedNum,
-                    skuUuid,
-                    useUuid,
-                }, ],
-            }, ],
+            operations: [
+                {
+                    TheSkus: [
+                        {
+                            Id,
+                            num: count || checkedNum,
+                            skuUuid,
+                            useUuid,
+                        },
+                    ],
+                },
+            ],
             serInfo: {
-                area: this.areaId
+                area: this.areaId,
             },
         };
 
@@ -656,7 +629,8 @@ export default class MonkeyMaster {
         headers.set('content-type', 'application/x-www-form-urlencoded');
 
         await mFetch(
-            'https://trade.jd.com/shopping/dynamic/consignee/saveConsignee.action', {
+            'https://trade.jd.com/shopping/dynamic/consignee/saveConsignee.action',
+            {
                 method: 'POST',
                 headers,
                 body: obj2qs({
@@ -673,35 +647,5 @@ export default class MonkeyMaster {
                 }),
             }
         );
-
-        // await mFetch(
-        //     "https://trade.jd.com/shopping/dynamic/consignee/checkOpenConsignee.action",
-        //     {
-        //         method: "POST",
-        //         headers,
-        //         body: obj2qs({
-        //             "consigneeParam.provinceId": provinceId,
-        //             "consigneeParam.cityId": cityId,
-        //             "consigneeParam.countyId": countyId,
-        //             "consigneeParam.townId": townId,
-        //         }),
-        //     }
-        // );
-
-        // await mFetch(
-        //     "https://trade.jd.com/shopping/dynamic/payAndShip/getAdditShipmentNew.action",
-        //     {
-        //         method: "POST",
-        //         headers,
-        //         body: obj2qs({
-        //             paymentId: 4,
-        //             "shipParam.reset311": 0,
-        //             resetFlag: 1000000000,
-        //             "shipParam.onlinePayType": 0,
-        //             typeFlag: 1,
-        //             promiseTagType: "",
-        //         }),
-        //     }
-        // );
     }
 }
