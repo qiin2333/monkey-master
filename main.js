@@ -5,9 +5,10 @@ import { exec } from 'https://deno.land/x/exec/mod.ts';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
-import mFetch from './fetch.js';
-import { logger } from './log.js';
-import { getFP } from './browser.js';
+import mFetch from './util/fetch.js';
+import { logger } from './util/log.js';
+import { getFP } from './util/browser.js';
+
 import {
     str2Json,
     getCookie,
@@ -16,7 +17,7 @@ import {
     obj2qs,
     genAreaId,
     isInStock,
-} from './util.js';
+} from './util/util.js';
 
 const random = new Random();
 const DEFAULT_USER_AGENT =
@@ -646,35 +647,5 @@ export default class MonkeyMaster {
                 }),
             }
         );
-
-        // await mFetch(
-        //     "https://trade.jd.com/shopping/dynamic/consignee/checkOpenConsignee.action",
-        //     {
-        //         method: "POST",
-        //         headers,
-        //         body: obj2qs({
-        //             "consigneeParam.provinceId": provinceId,
-        //             "consigneeParam.cityId": cityId,
-        //             "consigneeParam.countyId": countyId,
-        //             "consigneeParam.townId": townId,
-        //         }),
-        //     }
-        // );
-
-        // await mFetch(
-        //     "https://trade.jd.com/shopping/dynamic/payAndShip/getAdditShipmentNew.action",
-        //     {
-        //         method: "POST",
-        //         headers,
-        //         body: obj2qs({
-        //             paymentId: 4,
-        //             "shipParam.reset311": 0,
-        //             resetFlag: 1000000000,
-        //             "shipParam.onlinePayType": 0,
-        //             typeFlag: 1,
-        //             promiseTagType: "",
-        //         }),
-        //     }
-        // );
     }
 }
