@@ -130,7 +130,7 @@ export default class MonkeyMaster {
     }
 
     async loginByQRCode() {
-        const res = await mFetch('https://passport.jd.com/new/login.aspx', {
+        await mFetch('https://passport.jd.com/new/login.aspx', {
             headers: this.headers,
         });
 
@@ -504,11 +504,11 @@ export default class MonkeyMaster {
 
         const res = await mFetch(url, {
             headers: this.headers,
-            timeout: 5000,
-        }).then((r) => r.text());
+            timeout: 1000,
+        });
         let stockInfo = {};
         try {
-            stockInfo = str2Json(res);
+            stockInfo = str2Json(await res.text());
         } catch (error) {
             return false;
         }
@@ -543,8 +543,6 @@ export default class MonkeyMaster {
             headers: this.headers,
             body: JSON.stringify(payload),
         });
-
-        console.log(res.url);
 
         let cartInfo = await res.json();
         let vendors = [];
