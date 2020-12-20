@@ -46,7 +46,9 @@ export default class MonkeyMaster {
 
         try {
             cookieText = Deno.readTextFileSync(this.userPath + 'data');
-        } catch (error) {}
+        } catch (error) {
+            Deno.mkdirSync(this.userPath);
+        }
 
         if (cookieText) {
             this.headers.set('Cookie', cookieText);
