@@ -113,7 +113,6 @@ export default class MonkeyMaster {
             },
         });
 
-        // 只能这样写 referer 才能参数正确，JD 后台贱货
         this.headers.set('Referer', 'https://passport.jd.com/');
 
         let r = await mFetch(url, {
@@ -361,9 +360,12 @@ export default class MonkeyMaster {
         if (!time) return;
         const setTimeStamp = Date.parse(time);
         const runOrder = async () => {
-            await this.addCart(this.skuids);
-            await this.getOrderInfo();
-            await this.submitOrder();
+            // 流式并行处理加快速度，但可能出错
+            this.addCart(this.skuids);
+            await sleep(0.1);
+            this.getOrderInfo();
+            await sleep(0.2);
+            this.submitOrder();
         };
 
         let jdTime = await this.timeSyncWithJD();
