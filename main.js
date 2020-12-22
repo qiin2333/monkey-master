@@ -197,7 +197,17 @@ export default class MonkeyMaster {
         const addrs = await this.getUserAddr();
 
         if (addrs && addrs.length) {
-            this.addr = addrs[0];
+            const addrsMsg = addrs
+                .map(
+                    (addr, index) =>
+                        `[${index}]: ${addr.addressName}-${addr.fullAddress}-${addr.mobile}`
+                )
+                .join('\n');
+            const index = prompt(
+                `选择下单地址: 默认为首个 \n${addrsMsg} \n`,
+                0
+            );
+            this.addr = addrs[index];
             this.areaId = genAreaId(this.addr);
             console.log(`area id 获取成功: ${this.areaId}`);
         }
