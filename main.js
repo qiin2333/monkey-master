@@ -341,6 +341,8 @@ export default class MonkeyMaster {
             payload['submitOrderParam.payPassword'] = encodePwd(password);
         }
 
+        logger.info(`submit_order req start at ${Date()}`);
+
         const headers = new Headers(this.headers);
         headers.set('Host', 'trade.jd.com');
         headers.set(
@@ -348,8 +350,6 @@ export default class MonkeyMaster {
             'http://trade.jd.com/shopping/order/getOrderInfo.action'
         );
         headers.set('content-type', 'application/x-www-form-urlencoded');
-
-        logger.info(`submit_order req start at ${Date()}`);
 
         const res = await mFetch(url, {
             method: 'POST',
@@ -375,7 +375,7 @@ export default class MonkeyMaster {
             this.addCart(this.skuids);
             await sleep(0.06);
             this.getOrderInfo();
-            await sleep(0.18);
+            await sleep(0.25);
             this.submitOrder();
         };
 

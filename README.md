@@ -4,9 +4,11 @@
 
 
 ### 安装 deno
-
+``` bash
 brew install deno
 
+deno install -qAf --unstable https://deno.land/x/denon/denon.ts
+```
 ### 启动
 
 ``` bash
@@ -14,7 +16,7 @@ deno run --allow-read --allow-write --allow-net --allow-run index.js
 
 or
 
-denox run start
+denon start
 ```
 
 ### 配置参数说明 conf.json
@@ -23,6 +25,6 @@ password: 优惠券使用密码
 
 ### TODO
 
--   ~~uto get fingerprint (e.g. eid,fp).~~
+-   ~~auto get fingerprint (e.g. eid,fp).~~ 暂不支持 windows
 -   seckill
 -   GUI?
