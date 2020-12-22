@@ -411,7 +411,12 @@ export default class MonkeyMaster {
                 [skuid],
                 this.areaId
             );
+
+            if (!skuStockInfo) continue;
+
             theSkuInStock = isInStock(skuStockInfo[skuid]);
+
+            if (theSkuInStock) break;
 
             logger.debug(`${skuid}暂无库存，${interval}秒后再次查询`);
             await sleep(interval);
@@ -435,9 +440,13 @@ export default class MonkeyMaster {
                 this.areaId
             );
 
+            if (!skuStockInfo) continue;
+
             theSkuInStock = this.skuids.find((skuid) =>
                 isInStock(skuStockInfo[skuid])
             );
+
+            if (theSkuInStock) break;
 
             logger.debug(`${this.skuids}暂无库存，${interval}秒后再次查询`);
 
@@ -511,6 +520,7 @@ export default class MonkeyMaster {
             headers: this.headers,
             timeout: 1000,
         });
+
         let stockInfo = {};
         try {
             stockInfo = str2Json(await res.text());
