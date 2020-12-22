@@ -73,6 +73,7 @@ export default class MonkeyMaster {
         const res = await mFetch(`${url}?rid=${Date.now()}`, {
             headers: this.headers,
         });
+
         return (
             /order\.jd\.com/.test(res.url) && (await this.loginCheck(res.url))
         );
@@ -362,9 +363,9 @@ export default class MonkeyMaster {
         const runOrder = async () => {
             // 流式并行处理加快速度，但可能出错
             this.addCart(this.skuids);
-            await sleep(0.1);
+            await sleep(0.06);
             this.getOrderInfo();
-            await sleep(0.2);
+            await sleep(0.18);
             this.submitOrder();
         };
 
