@@ -412,17 +412,18 @@ export default class MonkeyMaster {
                 this.areaId
             );
 
-            if (!skuStockInfo) continue;
+            if (!skuStockInfo) {
+                logger.debug(`${this.skuids} 库存查询异常，重新查询`);
+                continue;
+            }
 
-            theSkuInStock = isInStock(skuStockInfo[skuid]);
+            if (isInStock(skuStockInfo[skuid])) break;
 
-            if (theSkuInStock) break;
-
-            logger.debug(`${skuid}暂无库存，${interval}秒后再次查询`);
+            logger.debug(`${skuid} 暂无库存，${interval} 秒后再次查询`);
             await sleep(interval);
         }
 
-        logger.info(`${skuid}好像有货了喔，下单试试`);
+        logger.info(`${skuid} 好像有货了喔，下单试试`);
 
         if (await this.submitOrder()) {
             return true;
@@ -440,7 +441,10 @@ export default class MonkeyMaster {
                 this.areaId
             );
 
-            if (!skuStockInfo) continue;
+            if (!skuStockInfo) {
+                logger.debug(`${this.skuids} 库存查询异常，重新查询`);
+                continue;
+            }
 
             theSkuInStock = this.skuids.find((skuid) =>
                 isInStock(skuStockInfo[skuid])
@@ -448,12 +452,12 @@ export default class MonkeyMaster {
 
             if (theSkuInStock) break;
 
-            logger.debug(`${this.skuids}暂无库存，${interval}秒后再次查询`);
+            logger.debug(`${this.skuids} 暂无库存，${interval} 秒后再次查询`);
 
             await sleep(interval);
         }
 
-        logger.info(`${theSkuInStock}好像有货了喔，下单试试`);
+        logger.info(`${theSkuInStock} 好像有货了喔，下单试试`);
 
         await this.prepareToOrder(theSkuInStock);
 
@@ -521,14 +525,15 @@ export default class MonkeyMaster {
             timeout: 1000,
         });
 
-        let stockInfo = {};
-        try {
-            stockInfo = str2Json(await res.text());
-        } catch (error) {
-            return false;
-        }
+        let stockInfo;
 
-        logger.info(`库存信息: ${JSON.stringify(stockInfo)}`);
+        if (res.ok) {
+            try {
+                stockInfo = str2Json(await res.text());
+            } catch (error) {}
+
+            logger.info(`库存信息: ${JSON.stringify(stockInfo)}`);
+        }
 
         return stockInfo;
     }
