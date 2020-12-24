@@ -2,12 +2,13 @@
 
 黄皮衣，酥麻罪恶滔天，此项目诞生于抢购猴卡 RTX3080、RX6800XT.....。
 
-### 安装 deno
+### 安装
 
-https://deno.land/#installation
+安装deno: https://deno.land/#installation
+
+安装依赖插件：
 
 ```bash
-brew install deno
 
 deno install -qAf --unstable https://deno.land/x/denon/denon.ts
 ```
