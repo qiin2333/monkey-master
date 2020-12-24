@@ -181,11 +181,7 @@ export default class MonkeyMaster {
         );
 
         const res = await mFetch(url, {
-            method: 'GET',
-            headers: this.headers.set(
-                'Referer',
-                'https://order.jd.com/center/list.action'
-            ),
+            headers: this.headers,
             redirect: 'error',
         });
 
@@ -294,7 +290,7 @@ export default class MonkeyMaster {
             this.eid = this.options.eid;
         } else if (!isWindows) {
             logger.info('获取必要信息中，大约需要30秒');
-            
+
             const browser = await initBrowser();
             const { fp, eid } = await getFP(this.userAgent);
             this.fp = fp;
@@ -483,8 +479,7 @@ export default class MonkeyMaster {
      * @returns
      */
     async prepareToOrder(skuid) {
-        // await this.cancelSelectCartSkus();
-
+        await this.cancelSelectCartSkus();
         const cart = await this.getCartInfo();
         const skuDetails = cart.find(({ item }) => {
             if (item.items) {
@@ -596,28 +591,21 @@ export default class MonkeyMaster {
     }
 
     async cancelSelectCartSkus() {
-        const url = buildUrl('https://api.m.jd.com/api', {
-            queryParams: {
-                functionId: 'pcCart_jc_cartUnCheckAll',
-                appid: 'JDC_mall_cart',
-                loginType: 3,
-                body: JSON.stringify(payload),
-            },
-        });
+        const url = 'https://cart.jd.com/cancelAllItem.action';
 
         const payload = {
-            serInfo: {
-                area: this.areaId,
-                'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
-            },
+            t: 0,
+            outSkus: '',
+            random: random.int(1000000, 9999999),
         };
 
         const res = await mFetch(url, {
+            method: 'POST',
             headers: this.headers,
             payload: JSON.stringify(payload),
         });
 
-        // this.saveCookie(res.headers.get('set-cookie'));
+        this.saveCookie(res.headers.get('set-cookie'));
         return res.headers.status === 200;
     }
 
