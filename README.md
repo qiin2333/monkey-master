@@ -4,7 +4,19 @@
 
 ### 安装
 
-安装deno: https://deno.land/#installation
+安装deno: 
+
+Shell (Mac, Linux):
+```bash
+curl -fsSL https://deno.land/x/install/install.sh | sh
+```
+PowerShell (Windows):
+```bash
+iwr https://deno.land/x/install/install.ps1 -useb | iex
+```
+
+如果安装不成功可以看deno官网的更多安装方式
+https://deno.land/#installation
 
 安装依赖插件：
 
