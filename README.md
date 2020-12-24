@@ -5,9 +5,9 @@
 ### 安装 deno
 
 ```bash
-brew install deno
+MAC: brew install deno
 
-deno install -qAf --unstable https://deno.land/x/denon/denon.ts
+windows: deno install -qAf --unstable https://deno.land/x/denon/denon.ts
 ```
 
 ### 启动
