@@ -47,7 +47,7 @@ export function genAreaId(addr) {
 }
 
 /**
- *
+ * 商品库存状态：33 -- 现货  0,34 -- 无货  36 -- 采购中  40 -- 可配货
  * @param {Object} skuStockInfo
  * @returns
  */

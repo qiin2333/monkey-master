@@ -7,7 +7,7 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
-import { getFP } from './util/browser.js';
+import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
 import {
     str2Json,
@@ -62,10 +62,6 @@ export default class MonkeyMaster {
         logger.info('登录成功了，来造作吧！');
 
         await this.getUserInfo();
-    }
-
-    async checkLoginStatus() {
-        await this.validateCookies();
     }
 
     async validateCookies() {
@@ -296,12 +292,15 @@ export default class MonkeyMaster {
         if (this.options.fp && this.options.eid) {
             this.fp = this.options.fp;
             this.eid = this.options.eid;
-        } else {
+        } else if (!isWindows) {
             logger.info('获取必要信息中，大约需要30秒');
-
+            
+            const browser = await initBrowser();
             const { fp, eid } = await getFP(this.userAgent);
             this.fp = fp;
             this.eid = eid;
+
+            await closeBrowser();
 
             logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
         }
@@ -331,8 +330,8 @@ export default class MonkeyMaster {
             'submitOrderParam.jxj': 1,
             'submitOrderParam.trackId': 'TestTrackId',
             // 'submitOrderParam.payType4YuShou': 1,    # 预售
-            'submitOrderParam.eid': eid,
-            'submitOrderParam.fp': fp,
+            'submitOrderParam.eid': eid || '',
+            'submitOrderParam.fp': fp || '',
             'submitOrderParam.needCheck': 1,
         };
 
