@@ -42,12 +42,7 @@ export function obj2qs(obj) {
 }
 
 export function genAreaId(addr) {
-    const {
-        provinceId,
-        cityId,
-        countyId,
-        townId
-    } = addr;
+    const { provinceId, cityId, countyId, townId } = addr;
     return `${provinceId}_${cityId}_${countyId}_${townId}`;
 }
 
@@ -59,6 +54,26 @@ export function genAreaId(addr) {
 export function isInStock(skuStockInfo = {}) {
     return (
         skuStockInfo &&
-        skuStockInfo['skuState'] === 1 && [33, 40].includes(skuStockInfo['StockState'])
+        skuStockInfo['skuState'] === 1 &&
+        [33, 40].includes(skuStockInfo['StockState'])
     );
+}
+
+/**
+ *
+ * 打平商品信息结构
+ * @export
+ * @param {Object} list
+ */
+export function itemFilter(list) {
+    let ret = [];
+    for (let { item } of list) {
+        if (item.items && item.items.length) {
+            ret = ret.concat(itemFilter(item.items));
+        } else {
+            ret.push(item);
+        }
+    }
+
+    return ret;
 }

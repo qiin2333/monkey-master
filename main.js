@@ -190,7 +190,6 @@ export default class MonkeyMaster {
                 'Referer',
                 'https://order.jd.com/center/list.action'
             ),
-            // credentials: 'include',
             redirect: 'error',
         });
 
@@ -360,7 +359,7 @@ export default class MonkeyMaster {
         const retJson = await res.json();
         logger.critical(retJson);
 
-        return retJson.success === true;
+        return retJson.success;
     }
 
     /**
@@ -485,10 +484,16 @@ export default class MonkeyMaster {
      * @returns
      */
     async prepareToOrder(skuid) {
-        await this.cancelSelectCartSkus();
+        // await this.cancelSelectCartSkus();
 
         const cart = await this.getCartInfo();
-        const skuDetails = cart.find((sku) => sku.item.Id == skuid);
+        const skuDetails = cart.find(({ item }) => {
+            if (item.items) {
+                return item.items.some(({ item }) => item.Id === skuid);
+            } else {
+                return item.Id === skuid;
+            }
+        });
 
         if (skuDetails) {
             logger.info(`${skuid}在购物车中，尝试勾选ing`);
@@ -498,7 +503,7 @@ export default class MonkeyMaster {
                 return logger.critical('商品勾选失败，检查配置');
             }
         } else {
-            logger.info(`${skuid}不在购物车中，尝试加车ing`);
+            logger.info(`${skuid} 不在购物车中，尝试加车ing`);
             await this.addCart([skuid]);
         }
 
@@ -551,7 +556,8 @@ export default class MonkeyMaster {
     async getCartInfo() {
         const url = buildUrl('https://api.m.jd.com/api', {
             queryParams: {
-                functionId: 'pcCart_jc_getCurrentCart',
+                // functionId: 'pcCart_jc_getCurrentCart',
+                functionId: 'pcCart_jc_cartUnCheckAll',
                 appid: 'JDC_mall_cart',
                 loginType: 3,
             },
@@ -591,18 +597,28 @@ export default class MonkeyMaster {
     }
 
     async cancelSelectCartSkus() {
-        const url = 'https://cart.jd.com/cancelAllItem.action';
+        const url = buildUrl('https://api.m.jd.com/api', {
+            queryParams: {
+                functionId: 'pcCart_jc_cartUnCheckAll',
+                appid: 'JDC_mall_cart',
+                loginType: 3,
+                body: JSON.stringify(payload),
+            },
+        });
+
         const payload = {
-            t: 0,
-            outSkus: '',
-            random: random.int(1e6, 1e7),
+            serInfo: {
+                area: this.areaId,
+                'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
+            },
         };
 
         const res = await mFetch(url, {
+            headers: this.headers,
             payload: JSON.stringify(payload),
         });
 
-        this.saveCookie(res.headers.get('set-cookie'));
+        // this.saveCookie(res.headers.get('set-cookie'));
         return res.headers.status === 200;
     }
 
@@ -612,28 +628,46 @@ export default class MonkeyMaster {
      * @param {Number} count 勾选数量
      */
     async cartItemSelectToggle(singleItem, count) {
+        const promotionId = singleItem.item.promotionId;
+
+        if (promotionId && singleItem.item.items) {
+            singleItem = singleItem.item.items[0];
+        }
+
         const {
             item: { olderVendorId, Id, skuUuid, useUuid },
             checkedNum,
         } = singleItem;
 
+        const theSkus = [
+            {
+                Id,
+                num: count || checkedNum,
+                skuUuid,
+                useUuid,
+            },
+        ];
+
         const payload = {
-            operations: [
+            operations: [{ TheSkus: theSkus }],
+            serInfo: { area: this.areaId },
+        };
+
+        if (promotionId && singleItem.item.items) {
+            payload.operations = [
                 {
-                    TheSkus: [
+                    carttype: '3',
+                    ThePacks: [
                         {
-                            Id,
-                            num: count || checkedNum,
-                            skuUuid,
-                            useUuid,
+                            num: 1,
+                            sType: 13,
+                            Id: promotionId,
+                            TheSkus: theSkus,
                         },
                     ],
                 },
-            ],
-            serInfo: {
-                area: this.areaId,
-            },
-        };
+            ];
+        }
 
         const url = buildUrl('https://api.m.jd.com/api', {
             queryParams: {
