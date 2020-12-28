@@ -2,7 +2,7 @@
   "$schema": "https://deno.land/x/denon/schema.json",
   "scripts": {
     "start": {
-      "cmd": "deno run --unstable index.js",
+      "cmd": "deno run --unstable --no-check index.js",
       "desc": "",
       "allow": ["env", "write", "read", "net", "run", "plugin"]
     }
