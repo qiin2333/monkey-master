@@ -1,6 +1,5 @@
 import MonkeyMaster from './main.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
-import Notify from 'https://deno.land/x/notify@v0.1/mod.ts';
 import { validateSkuids } from './util/validation.js';
 
 const CONFIG = await loadJsonFile('conf.json');
@@ -34,7 +33,9 @@ switch (mode) {
             skuids.length > 1 ? 'buyMultiSkusInStock' : 'buySingleSkuInStock';
 
         if (await ins[buyFunc](interval)) {
-            Notify('Monkey Master', 'Yes, you got it！🍌🍌🍌🍌🍌 ');
+            await fetch(
+                'https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it'
+            );
             Deno.exit();
         }
 

@@ -6,5 +6,6 @@
     "riskControl": "",
     "password": "123456"
   },
-  "userPath": "./cookies/"
+  "userPath": "./cookies/",
+  "sckey": ""
 }
