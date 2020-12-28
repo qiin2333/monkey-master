@@ -1,4 +1,4 @@
-import pptr from 'https://esm.sh/puppeteer-core/lib/esm/puppeteer/web.js';
+import pptr from 'https://unpkg.com/puppeteer-core@5.5.0/lib/esm/puppeteer/web.js';
 import { readLines } from 'https://deno.land/std/io/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 
