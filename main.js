@@ -72,7 +72,7 @@ export default class MonkeyMaster {
 
         return (
             !res.redirected &&
-            !/NotLogin/.test(await res.text()).error &&
+            !/NotLogin/.test(await res.text()) &&
             (await this.loginCheck(res.url))
         );
     }
