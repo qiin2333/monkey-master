@@ -71,7 +71,9 @@ export default class MonkeyMaster {
         });
 
         return (
-            /order\.jd\.com/.test(res.url) && (await this.loginCheck(res.url))
+            !res.redirected &&
+            !/NotLogin/.test(await res.text()).error &&
+            (await this.loginCheck(res.url))
         );
     }
 
@@ -540,8 +542,6 @@ export default class MonkeyMaster {
             try {
                 stockInfo = str2Json(await res.text());
             } catch (error) {}
-
-            logger.info(`库存信息: ${JSON.stringify(stockInfo)}`);
         }
 
         return stockInfo;
