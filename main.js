@@ -2,6 +2,7 @@ import { osType, isWindows } from 'https://deno.land/std@0.80.0/_util/os.ts';
 import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { exec } from 'https://deno.land/x/exec/mod.ts';
+import rua from 'https://deno.land/x/rua/mod.js';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
@@ -30,7 +31,7 @@ export default class MonkeyMaster {
         this.options = options;
         this.skuids = options.skuids || [];
         this.userAgent = CONFIG.useRandomUA
-            ? this.getRandomUA()
+            ? rua('desktop')
             : DEFAULT_USER_AGENT;
         this.headers = new Headers({
             'User-Agent': this.userAgent,
@@ -62,6 +63,7 @@ export default class MonkeyMaster {
         logger.info('登录成功了，来造作吧！');
 
         await this.getUserInfo();
+        await this.cancelSelectCartSkus();
     }
 
     async validateCookies() {
@@ -493,7 +495,6 @@ export default class MonkeyMaster {
      * @returns
      */
     async prepareToOrder(skuid) {
-        await this.cancelSelectCartSkus();
         const cart = await this.getCartInfo();
         const skuDetails = cart.find(({ item }) => {
             if (item.items) {
