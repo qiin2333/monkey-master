@@ -353,10 +353,17 @@ export default class MonkeyMaster {
             body: obj2qs(payload),
         });
 
-        const retJson = await res.json();
-        logger.critical(retJson);
+        let ret = false;
 
-        return retJson.success;
+        try {
+            const retJson = await res.json();
+            ret = retJson.success;
+            if (!ret) {
+                logger.critical(retJson);
+            }
+        } catch (error) {}
+
+        return ret;
     }
 
     /**
@@ -425,8 +432,11 @@ export default class MonkeyMaster {
 
             if (isInStock(skuStockInfo[skuid])) break;
 
-            logger.debug(`${skuid} 暂无库存，${interval} 秒后再次查询`);
-            await sleep(interval);
+            const runInterval = random.real(2, interval)
+
+            logger.debug(`${skuid} 暂无库存，${runInterval} 秒后再次查询`);
+            
+            await sleep(runInterval);
         }
 
         logger.info(`${skuid} 好像有货了喔，下单试试`);
@@ -458,9 +468,11 @@ export default class MonkeyMaster {
 
             if (theSkuInStock) break;
 
-            logger.debug(`${this.skuids} 暂无库存，${interval} 秒后再次查询`);
+            const runInterval = random.real(2, interval)
 
-            await sleep(interval);
+            logger.debug(`${this.skuids} 暂无库存，${runInterval} 秒后再次查询`);
+
+            await sleep(runInterval);
         }
 
         logger.info(`${theSkuInStock} 好像有货了喔，下单试试`);

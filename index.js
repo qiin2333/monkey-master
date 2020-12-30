@@ -28,13 +28,13 @@ const mode = prompt(
 
 switch (mode) {
     case '1':
-        const interval = prompt('库存监控间隔, 单位秒', 5);
+        const interval = prompt('设置库存监控间隔最大时间, 系统将在此时间内随机刷新 单位秒', 5);
         const buyFunc =
             skuids.length > 1 ? 'buyMultiSkusInStock' : 'buySingleSkuInStock';
 
         if (await ins[buyFunc](interval)) {
             await fetch(
-                'https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it'
+                `https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it 🍌🍌🍌🍌🍌`
             );
             Deno.exit();
         }
