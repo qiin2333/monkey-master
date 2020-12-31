@@ -156,19 +156,18 @@ export default class MonkeyMaster {
                 'https://passport.jd.com/uc/login?ltype=logout'
             );
 
-            const r = await mFetch(
+            const res = await mFetch(
                 `https://passport.jd.com/uc/qrCodeTicketValidation?t=${ticket}`,
                 {
                     method: 'GET',
                     headers: this.headers,
                     credentials: 'include',
                 }
-            ).then((res) => {
-                this.saveCookie(res.headers.get('set-cookie'));
-                return res;
-            });
+            );
 
-            return r.status === 200;
+            this.saveCookie(res.headers.get('set-cookie'));
+
+            return res.status === 200;
         }
         return false;
     }
@@ -260,6 +259,11 @@ export default class MonkeyMaster {
             const res = await mFetch(url, {
                 headers: this.headers,
             });
+
+            // presale
+            this.isPreSale = res.redirected && /getPresalInfo/.test(res.url);
+            this.preSaleUrl = res.url;
+
             const ret = await this.loginCheck(res.url);
 
             if (res.status === 200 && ret) {
@@ -277,8 +281,32 @@ export default class MonkeyMaster {
      * 订单结算页
      */
     async getOrderInfo() {
-        const url = 'http://trade.jd.com/shopping/order/getOrderInfo.action';
-        const res = await mFetch(`${url}?rid=${Date.now()}`);
+        const url = this.isPreSale
+            ? this.preSaleUrl
+            : `http://trade.jd.com/shopping/order/getOrderInfo.action?rid=${Date.now()}`;
+        let res;
+
+        if (this.isPreSale) {
+            const headers = new Headers(this.headers);
+            headers.set('content-type', 'application/x-www-form-urlencoded');
+            res = await mFetch(
+                'https://trade.jd.com/shopping/async/obtainOrderExt.action',
+                {
+                    method: 'POST',
+                    headers,
+                    body: obj2qs({
+                        flowType: 15,
+                        preSalePaymentTypeInOptional: 1,
+                    }),
+                }
+            );
+
+            this.saveCookie(res.headers.get('set-cookie'));
+        } else {
+            res = await mFetch(url, {
+                headers: this.headers,
+            });
+        }
 
         logger.info(`订单结算页面响应: ${res.status}`);
 
@@ -321,7 +349,6 @@ export default class MonkeyMaster {
             overseaPurchaseCookies: '',
             vendorRemarks: '[]',
             'submitOrderParam.sopNotPutInvoice': 'false',
-            // 'submitOrderParam.presalePayType': 1,   # 预售
             'submitOrderParam.trackID': 'TestTrackId',
             'submitOrderParam.ignorePriceChange': '0',
             'submitOrderParam.btSupport': '0',
@@ -329,11 +356,17 @@ export default class MonkeyMaster {
             'submitOrderParam.isBestCoupon': 1,
             'submitOrderParam.jxj': 1,
             'submitOrderParam.trackId': 'TestTrackId',
-            // 'submitOrderParam.payType4YuShou': 1,    # 预售
             'submitOrderParam.eid': eid || '',
             'submitOrderParam.fp': fp || '',
             'submitOrderParam.needCheck': 1,
         };
+
+        if (this.isPreSale) {
+            payload['submitOrderParam.presalePayType'] = 1;
+            payload['submitOrderParam.payType4YuShou'] = 1;
+            payload['preSalePaymentTypeInOptional'] = 1;
+            payload['flowType'] = 15;
+        }
 
         if (password) {
             payload['submitOrderParam.payPassword'] = encodePwd(password);
@@ -417,11 +450,10 @@ export default class MonkeyMaster {
      */
     async buySingleSkuInStock(interval = 5) {
         const skuid = this.skuids[0];
-        let theSkuInStock = false;
 
         await this.prepareToOrder(skuid);
 
-        while (!theSkuInStock) {
+        while (true) {
             const skuStockInfo = await this.getSkuStockInfo(
                 [skuid],
                 this.areaId
@@ -434,10 +466,10 @@ export default class MonkeyMaster {
 
             if (isInStock(skuStockInfo[skuid])) break;
 
-            const runInterval = random.real(2, interval)
+            const runInterval = random.real(2, interval);
 
             logger.debug(`${skuid} 暂无库存，${runInterval} 秒后再次查询`);
-            
+
             await sleep(runInterval);
         }
 
@@ -446,6 +478,7 @@ export default class MonkeyMaster {
         if (await this.submitOrder()) {
             return true;
         } else {
+            await sleep(interval);
             return await this.buySingleSkuInStock(interval);
         }
     }
@@ -470,9 +503,11 @@ export default class MonkeyMaster {
 
             if (theSkuInStock) break;
 
-            const runInterval = random.real(2, interval)
+            const runInterval = random.real(2, interval);
 
-            logger.debug(`${this.skuids} 暂无库存，${runInterval} 秒后再次查询`);
+            logger.debug(
+                `${this.skuids} 暂无库存，${runInterval} 秒后再次查询`
+            );
 
             await sleep(runInterval);
         }

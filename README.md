@@ -31,7 +31,7 @@ deno install -qAf --unstable https://deno.land/x/denon/denon.ts
 ### 启动
 
 ```bash
-deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-plugin --unstable index.js
+deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-plugin --unstable --no-check index.js
 
 or
 

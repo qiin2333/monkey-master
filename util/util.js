@@ -55,7 +55,7 @@ export function isInStock(skuStockInfo = {}) {
     return (
         skuStockInfo &&
         skuStockInfo['skuState'] === 1 &&
-        [33, 40].includes(skuStockInfo['StockState'])
+        [33, 36, 40].includes(skuStockInfo['StockState'])
     );
 }
 
