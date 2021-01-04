@@ -4,14 +4,17 @@
 
 ### 安装
 
-安装deno: 
+安装deno:
 
 Shell (Mac, Linux):
-```bash
+
+``` bash
 curl -fsSL https://deno.land/x/install/install.sh | sh
 ```
+
 PowerShell (Windows):
-```bash
+
+``` bash
 iwr https://deno.land/x/install/install.ps1 -useb | iex
 ```
 
@@ -20,15 +23,15 @@ https://deno.land/#installation
 
 安装依赖插件：
 
-```bash
+``` bash
 
 deno install -qAf --unstable https://deno.land/x/denon/denon.ts
 ```
 
 ### 启动
 
-```bash
-deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-plugin --unstable index.js
+``` bash
+deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-plugin --unstable --no-check index.js
 
 or
 
@@ -49,6 +52,6 @@ denon start
 
 ### TODO
 
--   ~~auto get fingerprint (e.g. eid,fp).~~ windows 可以不配置
--   seckill
--   GUI?
+*   ~~auto get fingerprint (e.g. eid, fp).~~ windows 可以不配置
+*   seckill
+*   GUI?

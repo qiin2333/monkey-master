@@ -1,8 +1,20 @@
 import MonkeyMaster from './main.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
-import { validateSkuids } from './util/validation.js';
-
+import {
+    validateSkuids
+} from './util/validation.js';
+import {
+    smtp
+} from './util/smtp.js';
 const CONFIG = await loadJsonFile('conf.json');
+
+// just in case have error
+try {
+    await smtp();
+} catch (err) {
+    console.log(err)
+}
+
 
 let skuids = prompt(
     '输入抢购skuid,可以是多个，以逗号(,)分割',
