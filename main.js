@@ -450,7 +450,11 @@ export default class MonkeyMaster {
             const koInfo = await ko.getSecKillOrderInfo();
 
             if (koInfo) {
-                await ko.submitSecKillOrder();
+                if (await ko.submitSecKillOrder()) {
+                    return true;
+                } else {
+                    runOrder();
+                }
             } else {
                 logger.critical('不存在抢购');
             }

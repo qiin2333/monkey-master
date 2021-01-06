@@ -2,13 +2,14 @@
 // import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { logger } from './log.js';
 import mFetch from './fetch.js';
+import { obj2qs } from './util.js';
 
 export default class SecKill {
     constructor(options = {}) {
         this.options = options;
         this.skuid = options.skuid;
         this.num = options.num;
-        this.headers = options.headers;
+        this.headers = new Headers(options.headers);
         this.url = this.getSeckillUrl();
         this.koInfo = {};
     }
@@ -21,23 +22,35 @@ export default class SecKill {
 
     async getSecKillOrderInfo() {
         await mFetch(this.url, { headers: this.headers });
+
+        this.headers.set('Host', 'marathon.jd.com');
+        this.headers.set('Referer', this.url);
+        this.headers.set('content-type', 'application/x-www-form-urlencoded');
+
+        const payload = {
+            sku: this.skuid,
+            num: this.num,
+            isModifyAddress: false,
+        };
+
         const res = await mFetch(
             'https://marathon.jd.com/seckillnew/orderService/pc/init.action',
             {
                 method: 'POST',
                 headers: this.headers,
+                body: obj2qs(payload),
             }
         );
 
         const koInfo = await res.json();
-        this.koInfo = await res.json();
+        this.koInfo = koInfo;
 
         return koInfo;
     }
 
     async submitSecKillOrder() {
         const url = `https://marathon.jd.com/seckillnew/orderService/pc/submitOrder.action?skuId=${this.skuid}`;
-        const { eid = '', fp = '' } = this.options;
+        const { eid = '', fp = '', password } = this.options;
         const { addressList, buyNum, invoiceInfo, token } = this.koInfo;
 
         const payload = {
@@ -64,7 +77,7 @@ export default class SecKill {
             invoicePhone: invoiceInfo['invoicePhone'],
             invoicePhoneKey: invoiceInfo['invoicePhoneKey'],
             invoice: true,
-            password,
+            password: '',
             codTimeType: 3,
             paymentType: 4,
             areaCode: addressList[0]['areaCode'],
@@ -80,17 +93,20 @@ export default class SecKill {
             townName: addressList[0]['townName'],
         };
 
-        const headers = new Headers(this.headers);
-        headers.set('Host', 'marathon.jd.com');
-        headers.set('Referer', this.url);
-        headers.set('content-type', 'application/x-www-form-urlencoded');
-
         const res = await mFetch(url, {
             method: 'POST',
-            headers,
+            headers: this.headers,
             body: obj2qs(payload),
         });
 
-        return true;
+        let ret = false;
+
+        try {
+            ret = await res.json()
+        } catch (error) {
+            
+        }
+
+        return ret;
     }
 }
