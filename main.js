@@ -10,6 +10,8 @@ import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
 import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
+import SecKill from './util/ko.js';
+
 import {
     str2Json,
     getCookie,
@@ -433,6 +435,43 @@ export default class MonkeyMaster {
         }
     }
 
+    async seckillOnTime(time, num = 1) {
+        if (!time) return;
+        const setTimeStamp = Date.parse(time);
+
+        const ko = new SecKill({
+            ...this.options,
+            skuid: this.skuids[0],
+            num,
+            headers: this.headers,
+        });
+
+        const runOrder = async () => {
+            const koInfo = await ko.getSecKillOrderInfo();
+
+            if (koInfo) {
+                await ko.submitSecKillOrder();
+            } else {
+                logger.critical('不存在抢购');
+            }
+        };
+
+        let jdTime = await this.timeSyncWithJD();
+        let timer = setTimeout(runOrder, setTimeStamp - jdTime);
+
+        await this.cancelSelectCartSkus();
+
+        while (setTimeStamp > jdTime) {
+            logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
+
+            // 30秒同步一次时间
+            await sleep(30);
+            clearTimeout(timer);
+            jdTime = await this.timeSyncWithJD();
+            timer = setTimeout(runOrder, setTimeStamp - jdTime);
+        }
+    }
+
     async timeSyncWithJD() {
         const syncStartTime = Date.now();
         const res = await mFetch('https://a.jd.com//ajax/queryServerData.html');
@@ -621,6 +660,10 @@ export default class MonkeyMaster {
             headers: this.headers,
             body: JSON.stringify(payload),
         });
+
+        if (res.url !== url) {
+            await this.loginCheck(res.url);
+        }
 
         let cartInfo = await res.json();
         let vendors = [];

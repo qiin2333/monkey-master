@@ -8,8 +8,6 @@ let skuids = prompt(
     '输入抢购skuid,可以是多个，以逗号(,)分割',
     '100016691566'
 ).split(',');
-// 检验合法性
-validateSkuids(skuids);
 
 const ins = new MonkeyMaster({
     skuids,
@@ -42,8 +40,13 @@ switch (mode) {
         break;
 
     case '2':
-        const time = prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
-        await ins.buyOnTime(time);
+        const buyTime = prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
+        await ins.buyOnTime(buyTime);
+        break;
+    
+    case '3':
+        const secKillTime = prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
+        await ins.seckillOnTime(secKillTime, 1);
         break;
 
     default:
