@@ -42,17 +42,25 @@ denon start
 
 在 conf.json 文件中配置必要参数：
 
-| 参数        | 说明                                          | 是否必须 | 数据类型 | 默认值    |
-| ----------- | --------------------------------------------- | -------- | -------- | --------- |
-| timeout     | 请求超时时间 单位毫秒                         |          | Number   | 5000      |
-| useRandomUA | 启动随机 user-agent                           |          | Boolean  | false     |
-| userPath    | 用户信息暂存目录                              |          | string   | ./cookie/ |
-| password    | 支付密码                                      | required | string   |           |
-| eid         | 设备 ID，部分系统可自动获取也可以手动配置     |          | string   |           |
-| fp          | fingerprint，部分系统可自动获取也可以手动配置 |          | string   |           |
+| 参数        | 说明                                                                   | 是否必须 | 数据类型 | 默认值    |
+| ----------- | ---------------------------------------------------------------------- | -------- | -------- | --------- |
+| timeout     | 请求超时时间 单位毫秒                                                  |          | Number   | 5000      |
+| useRandomUA | 启动随机 user-agent                                                    |          | Boolean  | false     |
+| userPath    | 用户信息暂存目录                                                       |          | string   | ./cookie/ |
+| password    | 支付密码                                                               | required | string   |           |
+| eid         | 设备 ID，部分系统可自动获取也可以手动配置                              |          | string   |           |
+| fp          | fingerprint，部分系统可自动获取也可以手动配置                          |          | string   |           |
+| sckey       | 用于下单成功的消息推送，这里借用第三方工具 http://sc.ftqq.com/ |          | string   |           |
+
+
+### 最佳实践
+
+- 操作之前删除购物车内的相关物品，因为JD的商品数据结构存在变化，依赖本公举可能会造成数量错误
+- 只监控一个 ID 可加快下单速度/成功率
+- 用 denon start 启动公举
 
 ### TODO
 
 -   ~~auto get fingerprint (e.g. eid,fp).~~ windows 可以不配置
--   seckill
+-   ~~seckill~~
 -   GUI?
