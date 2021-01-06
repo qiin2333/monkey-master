@@ -54,5 +54,5 @@ denon start
 ### TODO
 
 -   ~~auto get fingerprint (e.g. eid,fp).~~ windows 可以不配置
--   seckill
+-   ~~seckill
 -   GUI?
