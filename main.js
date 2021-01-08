@@ -451,17 +451,17 @@ export default class MonkeyMaster {
 
             if (koInfo) {
                 const ret = await ko.submitSecKillOrder();
-                
-                if (ret) {
+
+                if (ret.success) {
                     logger.critical(ret);
                     return ret;
                 }
-
-                await sleep(0.2);
-                runOrder();
             } else {
                 logger.critical('不存在抢购');
             }
+
+            await sleep(0.2);
+            runOrder();
         };
 
         let jdTime = await this.timeSyncWithJD();
