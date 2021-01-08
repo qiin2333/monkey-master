@@ -450,11 +450,15 @@ export default class MonkeyMaster {
             const koInfo = await ko.getSecKillOrderInfo();
 
             if (koInfo) {
-                if (await ko.submitSecKillOrder()) {
-                    return true;
-                } else {
-                    runOrder();
+                const ret = await ko.submitSecKillOrder();
+                
+                if (ret) {
+                    logger.critical(ret);
+                    return ret;
                 }
+
+                await sleep(0.2);
+                runOrder();
             } else {
                 logger.critical('不存在抢购');
             }
@@ -622,10 +626,7 @@ export default class MonkeyMaster {
             },
         });
 
-        const res = await mFetch(url, {
-            headers: this.headers,
-            timeout: 1000,
-        });
+        const res = await mFetch(url, { timeout: 1000 });
 
         let stockInfo;
 
