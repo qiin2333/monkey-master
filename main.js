@@ -233,9 +233,10 @@ export default class MonkeyMaster {
             newCookie = oldCookie + '; ' + newCookie;
         }
 
+        this.headers.set('Cookie', newCookie);
         Deno.writeTextFileSync(this.userPath + 'data', newCookie);
 
-        return this.headers.set('Cookie', newCookie);
+        return newCookie;
     }
 
     /**
@@ -447,21 +448,29 @@ export default class MonkeyMaster {
         });
 
         const runOrder = async () => {
+            // 抢5分钟
+            if (Date.now() - setTimeStamp > 1000 * 60 * 5) {
+                logger.critical('抢购时间已过，停止任务');
+                return Deno.exit();
+            }
+
+            ko.url = await ko.getSeckillUrl();
             const koInfo = await ko.getSecKillOrderInfo();
 
             if (koInfo) {
                 const ret = await ko.submitSecKillOrder();
-                
-                if (ret) {
-                    logger.critical(ret);
+                logger.critical(ret);
+                if (ret.success) {
                     return ret;
                 }
-
-                await sleep(0.2);
-                runOrder();
             } else {
                 logger.critical('不存在抢购');
             }
+
+            logger.info(ko.url);
+
+            await sleep(0.5);
+            runOrder();
         };
 
         let jdTime = await this.timeSyncWithJD();
@@ -566,6 +575,7 @@ export default class MonkeyMaster {
         if (await this.submitOrder()) {
             return true;
         } else {
+            await sleep(interval);
             return await this.buyMultiSkusInStock(interval);
         }
     }
