@@ -1,8 +1,11 @@
-// import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
+import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 // import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { logger } from './log.js';
+import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import mFetch from './fetch.js';
-import { obj2qs } from './util.js';
+import { str2Json, obj2qs } from './util.js';
+
+const random = new Random();
 
 export default class SecKill {
     constructor(options = {}) {
@@ -10,18 +13,39 @@ export default class SecKill {
         this.skuid = options.skuid;
         this.num = options.num;
         this.headers = new Headers(options.headers);
-        this.url = this.getSeckillUrl();
         this.koInfo = {};
     }
 
-    getSeckillUrl() {
+    async getSeckillUrl() {
+        // const skuId = this.skuid;
+        // const url = buildUrl('https://itemko.jd.com/itemShowBtn', {
+        //     queryParams: {
+        //         skuId,
+        //         from: 'pc',
+        //         callback: `jQuery${random.int(1000000, 9999999)}`,
+        //         _: String(Date.now()),
+        //     },
+        // });
+
+        // this.headers.set('Host', 'itemko.jd.com');
+        // this.headers.set('Referer', `https://item.jd.com/${skuId}.html`);
+
+        // const res = await mFetch(url, {
+        //     headers: this.headers,
+        // });
+
+        // const ret = str2Json(await res.text());
+
+        // this.url = ret.url;
+        // return ret.url;
+
         return `https://marathon.jd.com/seckill/seckill.action?skuId=${
             this.skuid
         }&num=${this.num}&rid=${Date.now()}`;
     }
 
     async getSecKillOrderInfo() {
-        await mFetch(this.url, { headers: this.headers });
+        // await mFetch(this.url, { headers: this.headers });
 
         this.headers.set('Host', 'marathon.jd.com');
         this.headers.set('Referer', this.url);
@@ -102,10 +126,8 @@ export default class SecKill {
         let ret = false;
 
         try {
-            ret = await res.json()
-        } catch (error) {
-            
-        }
+            ret = await res.json();
+        } catch (error) {}
 
         return ret;
     }

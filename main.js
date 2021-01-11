@@ -450,9 +450,11 @@ export default class MonkeyMaster {
         const runOrder = async () => {
             // 抢5分钟
             if (Date.now() - setTimeStamp > 1000 * 60 * 5) {
+                logger.critical('抢购时间已过，停止任务');
                 return Deno.exit();
             }
 
+            ko.url = await ko.getSeckillUrl();
             const koInfo = await ko.getSecKillOrderInfo();
 
             if (koInfo) {
@@ -464,6 +466,8 @@ export default class MonkeyMaster {
             } else {
                 logger.critical('不存在抢购');
             }
+
+            logger.info(ko.url);
 
             await sleep(0.5);
             runOrder();
