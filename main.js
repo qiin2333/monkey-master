@@ -454,10 +454,14 @@ export default class MonkeyMaster {
                 return Deno.exit();
             }
 
-            ko.url = await ko.getSeckillUrl();
-            const koInfo = await ko.getSecKillOrderInfo();
+            const koEnabled = await ko.getSeckillUrl();
 
-            if (koInfo) {
+            if (koEnabled) {
+                await ko.getSecKillOrderInfo();
+                logger.critical(`已获取到抢购地址: ${ko.url}`);
+            }
+
+            if (koEnabled && ko.koInfo) {
                 const ret = await ko.submitSecKillOrder();
                 logger.critical(ret);
                 if (ret.success) {
@@ -467,9 +471,7 @@ export default class MonkeyMaster {
                 logger.critical('不存在抢购');
             }
 
-            logger.info(ko.url);
-
-            await sleep(0.5);
+            await sleep(0.2);
             runOrder();
         };
 
