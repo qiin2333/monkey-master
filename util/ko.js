@@ -6,7 +6,6 @@ import mFetch from './fetch.js';
 import { str2Json, obj2qs } from './util.js';
 
 const random = new Random();
-
 export default class SecKill {
     constructor(options = {}) {
         this.options = options;
@@ -16,32 +15,39 @@ export default class SecKill {
         this.koInfo = {};
     }
 
+    /**
+     * https://static.360buyimg.com/item/unite/1.0.114/components/default-soa/buybtn/ko.js
+     *
+     */
     async getSeckillUrl() {
-        // const skuId = this.skuid;
-        // const url = buildUrl('https://itemko.jd.com/itemShowBtn', {
-        //     queryParams: {
-        //         skuId,
-        //         from: 'pc',
-        //         callback: `jQuery${random.int(1000000, 9999999)}`,
-        //         _: String(Date.now()),
-        //     },
-        // });
+        const skuId = this.skuid;
+        const url = buildUrl('https://itemko.jd.com/itemShowBtn', {
+            queryParams: {
+                skuId,
+                from: 'pc',
+                callback: `jQuery${random.int(1000000, 9999999)}`,
+                _: String(Date.now()),
+            },
+        });
 
-        // this.headers.set('Host', 'itemko.jd.com');
-        // this.headers.set('Referer', `https://item.jd.com/${skuId}.html`);
+        this.headers.set('Host', 'itemko.jd.com');
+        this.headers.set('Referer', `https://item.jd.com/${skuId}.html`);
 
-        // const res = await mFetch(url, {
-        //     headers: this.headers,
-        // });
+        const res = await mFetch(url, {
+            headers: this.headers,
+        });
 
-        // const ret = str2Json(await res.text());
+        // { type: "3", state: "11", url: "" }
+        // state = 12 - enabled, 11 - not start, 13 - end
+        const ret = str2Json(await res.text());
 
-        // this.url = ret.url;
-        // return ret.url;
+        this.url = ret.url;
 
-        return `https://marathon.jd.com/seckill/seckill.action?skuId=${
-            this.skuid
-        }&num=${this.num}&rid=${Date.now()}`;
+        return ret.state === '12';
+
+        // return `https://marathon.jd.com/seckill/seckill.action?skuId=${
+        //     this.skuid
+        // }&num=${this.num}&rid=${Date.now()}`;
     }
 
     async getSecKillOrderInfo() {
