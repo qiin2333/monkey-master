@@ -636,9 +636,10 @@ export default class MonkeyMaster {
     async prepareToOrder(skuid) {
         const cart = await this.getCartInfo();
         const skuDetails = cart.find(({ item }) => {
-            if (item.items) {
+            if (item.items && item.items.length) {
                 return item.items.some(({ item }) => item.Id === skuid);
             } else {
+                console.log(item.Id, skuid)
                 return item.Id === skuid;
             }
         });
