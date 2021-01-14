@@ -20,7 +20,7 @@ const ins = new MonkeyMaster({
 await ins.init();
 
 const mode = prompt(
-    '选择运行模式: 1-有货下单，2-按时下单，3-提前秒杀， 默认为1',
+    '选择运行模式: 1-有货下单, 2-按时下单, 3-提前秒杀, 默认为1',
     '1'
 );
 
@@ -45,8 +45,9 @@ switch (mode) {
         break;
     
     case '3':
+        const killFunc = prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', 1) == 1 ? 'seckillOnTime' : 'fqKillOnTime';
         const secKillTime = prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
-        await ins.seckillOnTime(secKillTime, 1);
+        await ins[killFunc](secKillTime, 1);
         break;
 
     default:

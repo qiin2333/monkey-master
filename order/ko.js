@@ -1,9 +1,9 @@
 import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 // import { sleep } from 'https://deno.land/x/sleep/mod.ts';
-import { logger } from './log.js';
+import { logger } from '../util/log.js';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
-import mFetch from './fetch.js';
-import { str2Json, obj2qs } from './util.js';
+import mFetch from '../util/fetch.js';
+import { str2Json, obj2qs } from '../util/util.js';
 
 const random = new Random();
 export default class SecKill {

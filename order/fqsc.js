@@ -1,0 +1,205 @@
+/**
+ * 分期商城下单逻辑
+ *
+ */
+
+import mFetch from '../util/fetch.js';
+// import { str2Json, obj2qs } from '../util/util.js';
+import { Hash, encode } from 'https://deno.land/x/checksum@1.2.0/mod.ts';
+
+export default class SecKill {
+    constructor(options = {}) {
+        this.skuid = options.skuid;
+        this.num = options.num || 1;
+        this.pwd = new Hash('md5').digest(encode(options.password)).hex();
+        this.headers = new Headers(options.headers);
+        this.headers.set('Host', 'api.m.jd.com');
+        this.headers.set('Origin', 'https://q.jd.com');
+        this.headers.set(
+            'User-Agent',
+            'Mozilla/5.0 (Linux; Android 10; M2006J10C Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045426 Mobile Safari/537.36/application=JDJR-App&clientType=android&deviceId=76dd6967b3a79461&token_eid=jdd01W4TUIK3A25X6UR22VHGKJPZEUFPO5UTVGONQWFA6DWUGV4FWUVJ6NFGSKAE6YXJGTMTK37SLYHCQU5AM4MEL4N3VL3PLYV5H3E54WSY01234567&andr_id=76dd6967b3a79461&oa_id=d0d2affd67619f6c&src=xiaomi&version=6.0.60&clientVersion=6.0.60&osVersion=10&osName=M2006J10C&isUpdate=0&HiClVersion=6.0.60&netWork=1&netWorkType=4&CpayJS=UnionPay/1.0 JDJR&sPoint=&*#@jdPaySDK*#@jdPayChannel=jdFinance&jdPayChannelVersion=6.0.60&jdPaySdkVersion=3.00.35.00&androidBrand=Redmi&androidManufacturer=Xiaomi&jdPayClientName=Android*#@jdPaySDK*#@'
+        );
+        this.headers.set('content-type', 'application/x-www-form-urlencoded');
+        this.headers.set('X-Requested-With', 'com.jd.jrapp');
+    }
+
+    /**
+     *
+     * @param {Object} options skuid, headers...
+     */
+    async createOrder() {
+        const url = `https://api.m.jd.com/api?functionId=j_currentOrder_floor`;
+        const headers = this.headers;
+        headers.set(
+            'Referer',
+            `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&groupId=2460&xxfSceneId=A308393754867154944&jrcontainer=h5&jrlogin=true&jrcloseweb=false&jrwallet=false&jrxviewtype=false&jrgobackrefresh=false`
+        );
+
+        const payload = {
+            cartAdd: {
+                wareId: this.skuid,
+                wareNum: this.num,
+            },
+            addressGlobal: true,
+            addressTotalNum: 20,
+            giftType: 0,
+            hasSelectedOTC: '0',
+            isLastOrder: true,
+            isOneHour: false,
+            isRefreshOrder: false,
+            isSupportAllInvoice: true,
+            operationType: 0,
+            settlementVersionCode: 708,
+            skuSource: 0,
+            sourceType: 2,
+            supportAllEncode: false,
+            isFloor: true,
+            OrderStr: {},
+            isInternational: false,
+            pingou_activeId: '',
+            pingou_bizvalue: '',
+            pingou_bizkey: '',
+            extAttrMap: {
+                mkjdcn: '',
+                url: '',
+                environments: 1,
+            },
+            apolloId: '0fe444b5de424623b76c9288dfadf2d5',
+            apolloSecret: 'a4060564b2c74daaa09f0480de1be1b1',
+            sdkClient: 'plugin_m',
+            sdkName: 'checkout',
+            sdkVersion: '1.0.0',
+            accessToken: '',
+        };
+
+        const urlencoded = new URLSearchParams();
+        urlencoded.append('appid', 'JDReactXxfgyl');
+        urlencoded.append('body', JSON.stringify(payload));
+        urlencoded.append('t', String(Date.now()));
+        urlencoded.append('client', 'jddx_m');
+        urlencoded.append('clientVersion', '8.0.0');
+
+        const res = await mFetch(url, {
+            method: 'POST',
+            headers,
+            body: urlencoded,
+            redirect: 'follow',
+        })
+            .then((response) => response.text())
+            .then((result) => console.log(result))
+            .catch((error) => console.log('error', error));
+    }
+
+    async submitOrder() {
+        const url = `https://api.m.jd.com/api?functionId=j_currentOrder_floor`;
+        const headers = this.headers;
+        headers.set(
+            'Referer',
+            `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&xxfSceneId=A340047790792949760&cu=true&utm_source=kong&utm_medium=tuiguang&utm_campaign=t_1000603438_&utm_term=8b17034a6ef1421eb782eb79bdec6536`
+        );
+
+        const payload = {
+            AppKeplerParams: {},
+            OrderStr: {
+                securityPayPassword: this.pwd,
+                identityCard: '',
+            },
+            addTransferJson: {
+                isUseJdBean: false,
+                isUsedGiftCard: false,
+                balance: 0,
+                jdBeanCount: 2000,
+                isShortPwd: true,
+                couponCount: 1,
+                isOpenPaymentPassword: true,
+                giftCardCount: 0,
+                isUsedCoupon: true,
+                isUseRedPacket: true,
+                isUseBalance: false,
+                isUsedConsignment: false,
+            },
+            UsualExtParams: {
+                xxfSceneId: 'A340047790792949760',
+                defChannel: 'baitiao',
+                planId: 3,
+                bankNo: 'bt',
+                xxfSkuGroupId: '',
+            },
+            extAttrMap: {
+                mkjdcn: '',
+                url: '',
+                environments: 1,
+            },
+            unpl:
+                'V2_ZzNtbUsEQxN0CkMEfE0LBWIAEgkRUUoWIVtAXChMCFdgBxBaclRCFnUUR1RnGV8UZwUZWEBcQhJFCHZUehhdAmYBF19LZ3Mldgh2XUsZWwRhBxBcRVFHFnINQF1/HFsDYwoQbXJXQh1FC0JTexpdBWYHEFxygeuZoqTWgN+uiKvYMxJbSlFFFXwMQlVLGGwHZgISWUtVQhF3OA06elRcAmYFFl9DUEURdg9DUnIdWQJhBxtfclZzFg==',
+            orderUnion: '',
+            supportAllEncode: false,
+            sourceType: 2,
+            isPinGou: false,
+            conditionSendPay: {},
+            isPresale: false,
+            apolloId: '0fe444b5de424623b76c9288dfadf2d5',
+            apolloSecret: 'a4060564b2c74daaa09f0480de1be1b1',
+            sdkClient: 'plugin_m',
+            sdkName: 'checkout',
+            sdkVersion: '1.0.0',
+            accessToken: '',
+        };
+
+        const urlencoded = new URLSearchParams();
+        urlencoded.append('appid', 'JDReactXxfgyl');
+        urlencoded.append('body', JSON.stringify(payload));
+        urlencoded.append('t', String(Date.now()));
+        urlencoded.append('client', 'jddx_m');
+        urlencoded.append('clientVersion', '8.0.0');
+
+        const res = await mFetch(url, {
+            method: 'POST',
+            headers,
+            body: urlencoded,
+            redirect: 'follow',
+        });
+
+        let ret = {};
+
+        try {
+            ret = await res.json();
+        } catch (error) {}
+
+        return ret.code === 0;
+    }
+}
+
+/*
+{
+    "submitOrder": {
+        "UseScore": 0,
+        "Message": "下单成功！",
+        "SubmitSkuNum": 3,
+        "OrderId": 123456,
+        "submitWithWmCard": "0",
+        "Flag": true,
+        "UseBalance": 0,
+        "cartInfo": [
+            {
+                "num": 2,
+                "skuId": 123456
+            },
+            {
+                "num": 1,
+                "skuId": 123456
+            }
+        ],
+        "OrderType": 0,
+        "Price": 1896.76,
+        "IdCompanyBranch": 10,
+        "FactPrice": 1896.76,
+        "MessageType": 0,
+        "IdPaymentType": 4
+    },
+    "coMsg": "重要提示：京东平台及销售商不会以订单异常、系统升级为由要求您点击任何网址链接进行退款操作。\n",
+    "code": 0,
+    "floors": [],
+    "onlinePay": true
+}
+*/
