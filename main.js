@@ -500,6 +500,7 @@ export default class MonkeyMaster {
             ...this.options,
             skuid: this.skuids[0],
             num,
+            addr: this.addr,
             headers: this.headers,
         });
 

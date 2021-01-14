@@ -41,9 +41,9 @@ export function obj2qs(obj) {
     ).toString();
 }
 
-export function genAreaId(addr) {
+export function genAreaId(addr, separator = '_') {
     const { provinceId, cityId, countyId, townId } = addr;
-    return `${provinceId}_${cityId}_${countyId}_${townId}`;
+    return `${provinceId}${separator}${cityId}${separator}${countyId}${separator}${townId}`;
 }
 
 /**

@@ -4,11 +4,12 @@
  */
 
 import mFetch from '../util/fetch.js';
-// import { str2Json, obj2qs } from '../util/util.js';
+import { genAreaId } from '../util/util.js';
 import { Hash, encode } from 'https://deno.land/x/checksum@1.2.0/mod.ts';
 
 export default class SecKill {
     constructor(options = {}) {
+        this.options = options;
         this.skuid = options.skuid;
         this.num = options.num || 1;
         this.pwd = new Hash('md5').digest(encode(options.password)).hex();
@@ -37,7 +38,7 @@ export default class SecKill {
 
         const payload = {
             cartAdd: {
-                wareId: this.skuid,
+                wareId: String(this.skuid),
                 wareNum: this.num,
             },
             addressGlobal: true,
@@ -86,17 +87,19 @@ export default class SecKill {
             redirect: 'follow',
         })
             .then((response) => response.text())
-            .then((result) => console.log(result))
+            .then((result) => '')
             .catch((error) => console.log('error', error));
     }
 
     async submitOrder() {
-        const url = `https://api.m.jd.com/api?functionId=j_currentOrder_floor`;
+        const url = `https://api.m.jd.com/api?functionId=j_submitOrder_floor`;
         const headers = this.headers;
         headers.set(
             'Referer',
             `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&xxfSceneId=A340047790792949760&cu=true&utm_source=kong&utm_medium=tuiguang&utm_campaign=t_1000603438_&utm_term=8b17034a6ef1421eb782eb79bdec6536`
         );
+
+        const { addr } = this.options;
 
         const payload = {
             AppKeplerParams: {},
@@ -104,19 +107,73 @@ export default class SecKill {
                 securityPayPassword: this.pwd,
                 identityCard: '',
             },
-            addTransferJson: {
-                isUseJdBean: false,
-                isUsedGiftCard: false,
-                balance: 0,
-                jdBeanCount: 2000,
-                isShortPwd: true,
-                couponCount: 1,
-                isOpenPaymentPassword: true,
-                giftCardCount: 0,
-                isUsedCoupon: true,
-                isUseRedPacket: true,
-                isUseBalance: false,
-                isUsedConsignment: false,
+            transferJson: {
+                isNIOUser: false,
+                productCount: 1,
+                addressTotalNum: 20,
+                addressId: addr.id,
+                selectedCouponNum: 1,
+                skuSource: 0,
+                hasSelectedOTC: '0',
+                selectedShipTypeForLego: '0',
+                solidCard: false,
+                price: 999,
+                isPresale: false,
+                invoiceType: 1,
+                immediatelyBuy: true,
+                version: '7.4.4',
+                supportJZD: '0',
+                sopBigSkuIds: ['25612010530'],
+                venderIdSetSize: 1,
+                sourceType: 2,
+                // sopJdShipmentMap: [
+                //     {
+                //         promiseSendPay: {
+                //             1: 2,
+                //             30: 2,
+                //             35: 4,
+                //             161: 0,
+                //             237: 4,
+                //             278: 0,
+                //         },
+                //         promiseDate: '2021-1-13',
+                //         shipmentId: 68,
+                //         venderId: '708466',
+                //         promiseTimeRange: '09:00-21:00',
+                //         batchId: 1,
+                //     },
+                // ],
+                isSupportAllInvoice: true,
+                isSupportWmGiftCard: '0',
+                venderType: 0,
+                isPinGou: false,
+                otcMergeSwitch: '',
+                freight: 0,
+                platform: 'apple',
+                paymentType: 4,
+                userLevel: -99999999,
+                locOrderType: 0,
+                selectedBZD: '0',
+                isInternational: false,
+                selectedJZD: '0',
+                isContainGift: 0,
+                xbCreditScore: 102.7,
+                address: genAreaId(addr, ','),
+                business: '1',
+                tuanState: '',
+                supportShipType: '0,10',
+                plusFlag: '201',
+                isHasSopVender: true,
+                venderAmount: 1,
+                useBestCoupon: true,
+                isNewUser: false,
+                adressRetTag: 2,
+                isSupportJdBeanBanner: false,
+                isSelectWmCard: '0',
+                isIousBuy: false,
+                isInternationalAndPresale: false,
+                category: '670:677:680',
+                isRealName: true,
             },
             UsualExtParams: {
                 xxfSceneId: 'A340047790792949760',
@@ -165,6 +222,8 @@ export default class SecKill {
         try {
             ret = await res.json();
         } catch (error) {}
+
+        console.log(ret, 12345);
 
         return ret.code === 0;
     }

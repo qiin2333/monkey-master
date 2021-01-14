@@ -45,7 +45,7 @@ switch (mode) {
         break;
     
     case '3':
-        const killFunc = prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', 1) == 1 ? 'seckillOnTime' : 'fqKillOnTime';
+        const killFunc = prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', 1) === '1' ? 'seckillOnTime' : 'fqkillOnTime';
         const secKillTime = prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
         await ins[killFunc](secKillTime, 1);
         break;
