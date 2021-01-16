@@ -51,7 +51,9 @@ export default class SecKill {
     }
 
     async getSecKillOrderInfo() {
-        // await mFetch(this.url, { headers: this.headers });
+        // await mFetch(`https:${this.url}&rid=${Math.random()}`, {
+        //     headers: this.headers,
+        // });
 
         this.headers.set('Host', 'marathon.jd.com');
         this.headers.set('Referer', this.url);
