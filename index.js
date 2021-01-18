@@ -3,27 +3,23 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 import { Webview } from 'https://deno.land/x/webview/mod.ts';
 
 const CONFIG = await loadJsonFile('conf.json');
-
 const html = await Deno.readTextFile('./ui/custom.html');
 
 const webview = new Webview({
     title: 'Hello Monkey 🐒🐒🐒',
     width: 640,
     height: 420,
-    debug: true,
     url: `data:text/html,${encodeURIComponent(html)}`,
 });
 
 for await (const event of webview.iter()) {
-    console.log(event)
     Object.assign(CONFIG, JSON.parse(event));
     webview.drop();
 }
 
-// let skuids = prompt(
-//     '输入抢购skuid,可以是多个，以逗号(,)分割',
-//     '100016691566'
-// ).split(',');
+if (!CONFIG.skuids) {
+    Deno.exit();
+}
 
 let skuids = CONFIG.skuids.split(',');
 
