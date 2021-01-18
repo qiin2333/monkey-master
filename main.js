@@ -5,10 +5,11 @@ import { exec } from 'https://deno.land/x/exec/mod.ts';
 import rua from 'https://deno.land/x/rua/mod.js';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
+import { Webview } from 'https://deno.land/x/webview/mod.ts';
+import { renderFile, configure } from 'https://deno.land/x/eta@v1.12.1/mod.ts';
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
-import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
 import SecKill from './order/ko.js';
 import FqKill from './order/fqsc.js';
@@ -29,6 +30,7 @@ const DEFAULT_USER_AGENT =
 const CONFIG = await loadJsonFile('conf.json');
 const skuInfoCache = {};
 
+configure({ views: `${Deno.cwd()}/ui/` });
 export default class MonkeyMaster {
     constructor(options = {}) {
         this.options = options;
@@ -640,7 +642,6 @@ export default class MonkeyMaster {
             if (item.items && item.items.length) {
                 return item.items.some(({ item }) => item.Id === skuid);
             } else {
-                console.log(item.Id, skuid)
                 return item.Id === skuid;
             }
         });
