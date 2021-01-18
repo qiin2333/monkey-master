@@ -1,0 +1,148 @@
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdn.metroui.org.ua/v4/css/metro-all.min.css"
+        />
+        <style>
+            body {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-around;
+                padding: 40px;
+            }
+            form {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .form-group {
+                display: flex;
+                align-items: center;
+                overflow: hidden;
+            }
+
+            label {
+                margin-right: 20px;
+                /* text-align: right; */
+            }
+
+            .button {
+                margin: auto;
+                margin-top: 40px;
+                width: 200px;
+            }
+        </style>
+    </head>
+    <body>
+        <h2 class="text-center">配置你的抢购实例</h2>
+        <!-- <div data-role="cube"></div> -->
+        <form>
+            <div class="form-group">
+                <input
+                    type="text"
+                    name="skuids"
+                    data-role="materialinput"
+                    placeholder="输入抢购skuid,可以是多个，以逗号(,)分割S"
+                />
+            </div>
+            <div class="form-group">
+                <label>监控间隔（秒）:</label>
+                <input
+                    type="number"
+                    name="interval"
+                    min="3"
+                    max="30"
+                    value="5"
+                />
+            </div>
+            <div class="form-group">
+                <label>运行模式:</label>
+                <input
+                    type="radio"
+                    data-role="radio"
+                    data-caption="有货下单"
+                    name="mode"
+                    value="1"
+                    checked
+                />
+                <input
+                    type="radio"
+                    data-role="radio"
+                    data-caption="按时下单"
+                    name="mode"
+                    value="2"
+                />
+                <input
+                    type="radio"
+                    data-role="radio"
+                    data-caption="提前秒杀"
+                    name="mode"
+                    value="3"
+                />
+            </div>
+            <div class="form-group">
+                <label>下单方式:</label>
+                <input
+                    type="radio"
+                    data-role="radio"
+                    data-caption="京东 web"
+                    name="app"
+                    value="1"
+                    checked
+                />
+                <input
+                    type="radio"
+                    data-role="radio"
+                    data-caption="京东金融 APP"
+                    name="app"
+                    value="2"
+                />
+            </div>
+            <div class="form-group" id="opt-buytime">
+                <label>开始时间:</label>
+                <input
+                    type="text"
+                    name="buytime"
+                    data-role="materialinput"
+                    placeholder="输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS"
+                />
+            </div>
+            <button type="submit" class="button success">确认</button>
+        </form>
+        <!-- <div data-role="countdown" data-hours="90"></div> -->
+        <script src="https://cdn.metroui.org.ua/v4/js/metro.min.js"></script>
+        <script>
+            const $buyTimeInput = $('#opt-buytime').hide();
+            const form = document.forms[0];
+
+            $(form).on('change', (e) => {
+                if (form.mode.value === '1') {
+                    $buyTimeInput.hide();
+                } else {
+                    $buyTimeInput.show();
+                }
+            });
+
+            $(form).on('submit', (e) => {
+                const { app, mode, skuids, interval, buytime } = form;
+                external.invoke(
+                    JSON.stringify({
+                        skuids: skuids.value || '100016691566',
+                        interval: interval.value || 5,
+                        buyTime: buytime.value,
+                        mode: mode.value,
+                        app: app.value,
+                    })
+                );
+                e.preventDefault();
+                return false;
+            });
+        </script>
+    </body>
+</html>

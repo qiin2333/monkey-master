@@ -8,7 +8,6 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
-import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
 import SecKill from './order/ko.js';
 import FqKill from './order/fqsc.js';
@@ -327,12 +326,12 @@ export default class MonkeyMaster {
         } else if (!isWindows) {
             logger.info('获取必要信息中，大约需要30秒');
 
-            const browser = await initBrowser();
-            const { fp, eid } = await getFP(this.userAgent);
-            this.fp = fp;
-            this.eid = eid;
+            // const browser = await initBrowser();
+            // const { fp, eid } = await getFP(this.userAgent);
+            // this.fp = fp;
+            // this.eid = eid;
 
-            await closeBrowser();
+            // await closeBrowser();
 
             logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
         }
