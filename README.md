@@ -2,19 +2,6 @@
 
 黄皮衣，酥麻罪恶滔天，此项目诞生于抢购猴卡 RTX3080、RX6800XT.....。
 
-## 目录结构
-
-``` bash
-monkey-master
-├── order/
-├── util/                  
-├── conf.json               配置文件，可修改
-├── index.js                入口
-├── main.js                 
-├── install.bat             安装脚本
-├── start.bat               运行脚本
-└── README.md
-```
 ### 安装
 
 安装 deno:
@@ -30,6 +17,9 @@ PowerShell (Windows):
 ```bash
 iwr https://deno.land/x/install/install.ps1 -useb | iex
 ```
+
+如果安装不成功可以看 deno 官网的更多安装方式
+https://deno.land/#installation
 
 安装依赖插件：
 
@@ -67,6 +57,7 @@ denon start
 
 - 操作之前删除购物车内的相关物品，因为JD的商品数据结构存在变化，依赖本公举可能会造成数量错误
 - 只监控一个 ID 可加快下单速度/成功率
+- 用 denon start 启动公举
 - 增加京东金融分期接口，可从秒杀模式进入（听说这个方式节省步骤成功率较高)
 
 ### TODO
