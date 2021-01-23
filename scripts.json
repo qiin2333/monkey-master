@@ -1,5 +1,5 @@
 {
-  "$schema": "https://deno.land/x/denon/schema.json",
+  "$schema": "https://raw.githubusercontent.com/denosaurs/denon/main/schema.json",
   "scripts": {
     "start": {
       "cmd": "deno run --unstable --no-check index.js",
