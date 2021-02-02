@@ -42,10 +42,15 @@ export function obj2qs(obj) {
 }
 
 export function numAvg(arr) {
-    const sum =
-        arr.reduce((a, c) => a + c) - Math.max(...arr) - Math.min(...arr);
+    let len = arr.length;
+    let sum = arr.reduce((a, c) => a + c);
 
-    return sum / arr.length;
+    if (len > 5) {
+        sum = sum - Math.max(...arr) - Math.min(...arr);
+        len -= 2;
+    }
+
+    return sum / len;
 }
 
 export function genAreaId(addr, separator = '_') {
