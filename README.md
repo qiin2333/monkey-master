@@ -70,7 +70,6 @@ denon start
 - 增加京东金融分期接口，可从秒杀模式进入（听说这个方式节省步骤成功率较高)
 
 ### TODO
-
--   ~~auto get fingerprint (e.g. eid,fp).~~ windows 可以不配置
--   ~~seckill~~
--   GUI?
+- [x] auto get fingerprint (e.g. eid,fp).
+- [x] 秒杀商品
+- [ ] GUI - 部分完成
