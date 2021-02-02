@@ -41,6 +41,13 @@ export function obj2qs(obj) {
     ).toString();
 }
 
+export function numAvg(arr) {
+    const sum =
+        arr.reduce((a, c) => a + c) - Math.max(...arr) - Math.min(...arr);
+
+    return sum / arr.length;
+}
+
 export function genAreaId(addr, separator = '_') {
     const { provinceId, cityId, countyId, townId } = addr;
     return `${provinceId}${separator}${cityId}${separator}${countyId}${separator}${townId}`;
