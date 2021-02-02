@@ -19,6 +19,7 @@ import {
     cookieParse,
     encodePwd,
     obj2qs,
+    numAvg,
     genAreaId,
     isInStock,
 } from './util/util.js';
@@ -43,6 +44,7 @@ export default class MonkeyMaster {
         });
         this.userPath = CONFIG.userPath || './cookies/';
         this.isLogged = false;
+        this.postConsumes = [];
     }
 
     async init() {
@@ -465,7 +467,10 @@ export default class MonkeyMaster {
             if (koEnabled && ko.koInfo) {
                 const ret = await ko.submitSecKillOrder();
                 logger.critical(ret);
-                if (ret.success) {
+                if (ret.success && ret.orderId) {
+                    logger.info(
+                        `恭喜！已抢到，订单号 ${ret.orderId}, 付款链接: ${ret.pcUrl}, 金额: ${ret.totalMoney}`
+                    );
                     return ret;
                 }
             } else {
@@ -530,7 +535,7 @@ export default class MonkeyMaster {
             logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
 
             // 30秒同步一次时间
-            await sleep(30);
+            await sleep(10);
             clearTimeout(timer);
             jdTime = await this.timeSyncWithJD();
             timer = setTimeout(runOrder, setTimeStamp - jdTime);
@@ -540,10 +545,16 @@ export default class MonkeyMaster {
     async timeSyncWithJD() {
         const syncStartTime = Date.now();
         const res = await mFetch('https://a.jd.com//ajax/queryServerData.html');
-        const { serverTime } = await res.json();
         const syncEndTime = Date.now();
+        const { serverTime } = await res.json();
 
-        return serverTime + (syncEndTime - syncStartTime) / 2;
+        const postConsume = (syncEndTime - syncStartTime) / 2;
+
+        // 每次同步再次计算平均偏移时间
+        this.postConsumes.push(postConsume);
+        this.avgTimeOffset = numAvg(this.postConsumes);
+
+        return serverTime + postConsume + this.avgTimeOffset;
     }
 
     /**

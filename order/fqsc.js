@@ -223,8 +223,6 @@ export default class SecKill {
             ret = await res.json();
         } catch (error) {}
 
-        console.log(ret, 12345);
-
         return ret.code === 0;
     }
 }

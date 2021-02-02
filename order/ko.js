@@ -80,6 +80,8 @@ export default class SecKill {
         return koInfo;
     }
 
+    // {"appUrl":"https://pay.m.jd.com/cpay/newPay-index.html?appId=jd_m_msha&payId=bf24f1ea221d48668c370bd3c082d558","orderId":143647354755,"pcUrl":"//sko.jd.com/success/success.action?orderId=143647354755&rid=0.9128305536787559","resultCode":0,"skuId":0,"success":true,"totalMoney":"2349.0000"}
+
     async submitSecKillOrder() {
         const url = `https://marathon.jd.com/seckillnew/orderService/pc/submitOrder.action?skuId=${this.skuid}`;
         const { eid = '', fp = '', password } = this.options;
