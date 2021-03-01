@@ -419,7 +419,7 @@ export default class MonkeyMaster {
             this.addCart(this.skuids);
             await sleep(0.06);
             this.getOrderInfo();
-            await sleep(0.25);
+            await sleep(0.3);
             this.submitOrder();
         };
 
@@ -432,7 +432,7 @@ export default class MonkeyMaster {
             logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
 
             // 30秒同步一次时间
-            await sleep(30);
+            await sleep(random.real(5, 10));
             clearTimeout(timer);
             jdTime = await this.timeSyncWithJD();
             timer = setTimeout(runOrder, setTimeStamp - jdTime);
@@ -452,7 +452,7 @@ export default class MonkeyMaster {
 
         const runOrder = async () => {
             // 抢5分钟
-            if (Date.now() - setTimeStamp > 1000 * 60 * 5) {
+            if (Date.now() - setTimeStamp > 1000 * 60 * 30) {
                 logger.critical('抢购时间已过，停止任务');
                 return Deno.exit();
             }
@@ -477,7 +477,7 @@ export default class MonkeyMaster {
                 logger.critical('不存在抢购');
             }
 
-            await sleep(0.2);
+            await sleep(random.real(2, 5));
             runOrder();
         };
 
@@ -490,7 +490,7 @@ export default class MonkeyMaster {
             logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
 
             // 30秒同步一次时间
-            await sleep(30);
+            await sleep(random.real(5, 10));
             clearTimeout(timer);
             jdTime = await this.timeSyncWithJD();
             timer = setTimeout(runOrder, setTimeStamp - jdTime);
@@ -535,7 +535,7 @@ export default class MonkeyMaster {
             logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
 
             // 30秒同步一次时间
-            await sleep(10);
+            await sleep(random.real(5, 10));
             clearTimeout(timer);
             jdTime = await this.timeSyncWithJD();
             timer = setTimeout(runOrder, setTimeStamp - jdTime);
