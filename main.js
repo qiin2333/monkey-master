@@ -326,7 +326,7 @@ export default class MonkeyMaster {
         if (this.options.fp && this.options.eid) {
             this.fp = this.options.fp;
             this.eid = this.options.eid;
-        } else if (!isWindows) {
+        } else if (this.fpRequired) {
             logger.info('获取必要信息中，大约需要30秒');
 
             const browser = await initBrowser();
@@ -423,20 +423,9 @@ export default class MonkeyMaster {
             this.submitOrder();
         };
 
-        let jdTime = await this.timeSyncWithJD();
-        let timer = setTimeout(runOrder, setTimeStamp - jdTime);
-
         await this.cancelSelectCartSkus();
-
-        while (setTimeStamp > jdTime) {
-            logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
-
-            // 30秒同步一次时间
-            await sleep(random.real(5, 10));
-            clearTimeout(timer);
-            jdTime = await this.timeSyncWithJD();
-            timer = setTimeout(runOrder, setTimeStamp - jdTime);
-        }
+        await this.waiting4Start(setTimeStamp);
+        await runOrder();
     }
 
     async seckillOnTime(time, num = 1) {
@@ -481,20 +470,9 @@ export default class MonkeyMaster {
             runOrder();
         };
 
-        let jdTime = await this.timeSyncWithJD();
-        let timer = setTimeout(runOrder, setTimeStamp - jdTime);
-
         await this.cancelSelectCartSkus();
-
-        while (setTimeStamp > jdTime) {
-            logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
-
-            // 30秒同步一次时间
-            await sleep(random.real(5, 10));
-            clearTimeout(timer);
-            jdTime = await this.timeSyncWithJD();
-            timer = setTimeout(runOrder, setTimeStamp - jdTime);
-        }
+        await this.waiting4Start(setTimeStamp);
+        await runOrder();
     }
 
     async fqkillOnTime(time, num = 1) {
@@ -526,20 +504,9 @@ export default class MonkeyMaster {
             runOrder();
         };
 
-        let jdTime = await this.timeSyncWithJD();
-        let timer = setTimeout(runOrder, setTimeStamp - jdTime);
-
         await this.cancelSelectCartSkus();
-
-        while (setTimeStamp > jdTime) {
-            logger.info(`距离抢购还剩 ${(setTimeStamp - jdTime) / 1000} 秒`);
-
-            // 30秒同步一次时间
-            await sleep(random.real(5, 10));
-            clearTimeout(timer);
-            jdTime = await this.timeSyncWithJD();
-            timer = setTimeout(runOrder, setTimeStamp - jdTime);
-        }
+        await this.waiting4Start(setTimeStamp);
+        await runOrder();
     }
 
     async timeSyncWithJD() {
@@ -555,6 +522,26 @@ export default class MonkeyMaster {
         this.avgTimeOffset = numAvg(this.postConsumes);
 
         return serverTime + postConsume + this.avgTimeOffset;
+    }
+
+    async waiting4Start(setTimeStamp) {
+        let jdTime = Date.now();
+
+        while (setTimeStamp > jdTime) {
+            jdTime = await this.timeSyncWithJD();
+            const timeRemainMS = setTimeStamp - jdTime;
+
+            logger.info(`距离抢购还剩 ${timeRemainMS / 1000} 秒`);
+
+            // 30秒同步一次时间
+            if (timeRemainMS > 18 * 1000) {
+                await sleep(random.real(5, 15));
+            } else {
+                console.log('--------------闭眼祈祷---------------');
+                await sleep(timeRemainMS / 1000);
+                break;
+            }
+        }
     }
 
     /**
@@ -651,7 +638,7 @@ export default class MonkeyMaster {
             if (item.items && item.items.length) {
                 return item.items.some(({ item }) => item.Id === skuid);
             } else {
-                console.log(item.Id, skuid)
+                console.log(item.Id, skuid);
                 return item.Id === skuid;
             }
         });

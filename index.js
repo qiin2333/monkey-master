@@ -47,6 +47,7 @@ switch (mode) {
         const buyTime = prompt(
             '输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS'
         );
+        console.log('请确保购物车中待抢购商品已删除！！')
         await ins.buyOnTime(buyTime);
         break;
 
