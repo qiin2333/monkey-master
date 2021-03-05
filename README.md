@@ -65,8 +65,8 @@ denon start
 
 ### 最佳实践
 
-- 操作之前删除购物车内的相关物品，因为JD的商品数据结构存在变化，依赖本公举可能会造成数量错误
-- 只监控一个 ID 可加快下单速度/成功率
+- 操作之前删除购物车内的相关物品
+- 抢购时间的设置使用精确的实际时间即可，本公举通过客户端网络延迟计算了最后下单秒杀需要提前的时间
 - 增加京东金融分期接口，可从秒杀模式进入（听说这个方式节省步骤成功率较高)
 - 关于抢购模式的问题可以看看这里 [issue #30](https://github.com/chou0212/monkey-master/issues/30)
 - 还有问题？[![follow us](http://pub.idqqimg.com/wpa/images/group.png "follow us")](https://qm.qq.com/cgi-bin/qm/qr?k=sgAvZ_SsEL1h0r6sgPkBn89eD0-TOmgV&jump_from=webapi)

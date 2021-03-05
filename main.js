@@ -1,4 +1,5 @@
 import { osType, isWindows } from 'https://deno.land/std@0.80.0/_util/os.ts';
+import { format as dateFormat } from 'https://deno.land/std@0.89.0/datetime/mod.ts';
 import { buildUrl } from 'https://deno.land/x/url_builder/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { exec } from 'https://deno.land/x/exec/mod.ts';
@@ -416,11 +417,9 @@ export default class MonkeyMaster {
         const setTimeStamp = Date.parse(time);
         const runOrder = async () => {
             // 流式并行处理加快速度，但可能出错
-            this.addCart(this.skuids);
-            await sleep(0.06);
-            this.getOrderInfo();
-            await sleep(0.3);
-            this.submitOrder();
+            await Promise.race([this.addCart(this.skuids), sleep(0.06)]);
+            await Promise.race([this.getOrderInfo(), sleep(0.4)]);
+            await this.submitOrder();
         };
 
         await this.cancelSelectCartSkus();
@@ -519,6 +518,12 @@ export default class MonkeyMaster {
 
         // 每次同步再次计算平均偏移时间
         this.postConsumes.push(postConsume);
+
+        // 只取最后20个样本，多了干扰
+        if (this.postConsumes.length > 20) {
+            this.postConsumes.shift();
+        }
+
         this.avgTimeOffset = numAvg(this.postConsumes);
 
         return serverTime + postConsume + this.avgTimeOffset;
@@ -530,15 +535,29 @@ export default class MonkeyMaster {
         while (setTimeStamp > jdTime) {
             jdTime = await this.timeSyncWithJD();
             const timeRemainMS = setTimeStamp - jdTime;
+            const timeRemainSec = (timeRemainMS / 1000).toFixed(3);
 
-            logger.info(`距离抢购还剩 ${timeRemainMS / 1000} 秒`);
+            console.info(
+                '\x1b[36m%s\x1b[0m',
+                `[当前时间${dateFormat(
+                    new Date(jdTime),
+                    'yyyy-dd-MM HH:mm:ss.SSS'
+                )}] 距离抢购还剩 ${timeRemainSec} 秒`
+            );
 
             // 30秒同步一次时间
-            if (timeRemainMS > 18 * 1000) {
-                await sleep(random.real(5, 15));
+            if (timeRemainSec > 5 * 60) {
+                await sleep(random.real(5, 60));
+            } else if (timeRemainSec > 10) {
+                await sleep(random.real(5, 9));
             } else {
-                console.log('--------------闭眼祈祷---------------');
-                await sleep(timeRemainMS / 1000);
+                console.log(
+                    '\x1b[33m%s\x1b[0m',
+                    `--------------闭眼祈祷, 默数${Math.ceil(
+                        timeRemainSec
+                    )}下再看结果喔---------------`
+                );
+                await sleep(timeRemainSec);
                 break;
             }
         }
