@@ -7,7 +7,7 @@ const CONFIG = await loadJsonFile('conf.json');
 let skuids = prompt(
     '输入抢购skuid,可以是多个，以逗号(,)分割',
     '100016691566'
-).split(',');
+).trim().split(',');
 
 const ins = new MonkeyMaster({
     skuids,
@@ -44,26 +44,31 @@ switch (mode) {
         break;
 
     case '2':
+        const buyOnTimeFunc =
+            prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', 1) === '1'
+                ? 'buyOnTime'
+                : 'fqkillOnTime';
+
         const buyTime = prompt(
             '输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS'
         );
-        console.log('请确保购物车中待抢购商品已删除！！')
-        await ins.buyOnTime(buyTime);
+
+        console.log('请确保购物车中待抢购商品已删除!!!');
+
+        await ins[buyOnTimeFunc](buyTime);
         break;
 
     case '3':
-        const killFunc =
-            prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', 1) === '1'
-                ? 'seckillOnTime'
-                : 'fqkillOnTime';
         const secKillTime = prompt(
             '输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS'
         );
-        if (await ins[killFunc](secKillTime, 1)) {
+
+        if (await ins.seckillOnTime(secKillTime, 1)) {
             await fetch(
                 `https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it 🍌🍌🍌🍌🍌`
             );
         }
+
         break;
 
     default:

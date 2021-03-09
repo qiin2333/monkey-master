@@ -293,6 +293,13 @@ export default class MonkeyMaster {
             : `http://trade.jd.com/shopping/order/getOrderInfo.action?rid=${Date.now()}`;
         let res;
 
+        console.info(
+            `getOrderInfo req start at ${dateFormat(
+                new Date(),
+                'yyyy-MM-dd HH:mm:ss.SSS'
+            )}`
+        );
+
         if (this.isPreSale) {
             const headers = new Headers(this.headers);
             headers.set('content-type', 'application/x-www-form-urlencoded');
@@ -379,7 +386,12 @@ export default class MonkeyMaster {
             payload['submitOrderParam.payPassword'] = encodePwd(password);
         }
 
-        logger.info(`submit_order req start at ${Date()}`);
+        console.info(
+            `submit_order req start at ${dateFormat(
+                new Date(),
+                'yyyy-MM-dd HH:mm:ss.SSS'
+            )}`
+        );
 
         const headers = new Headers(this.headers);
         headers.set('Host', 'trade.jd.com');
@@ -418,7 +430,7 @@ export default class MonkeyMaster {
         const runOrder = async () => {
             // 流式并行处理加快速度，但可能出错
             await Promise.race([this.addCart(this.skuids), sleep(0.06)]);
-            await Promise.race([this.getOrderInfo(), sleep(0.4)]);
+            await Promise.race([this.getOrderInfo(), sleep(0.5)]);
             await this.submitOrder();
         };
 
@@ -514,10 +526,13 @@ export default class MonkeyMaster {
         const syncEndTime = Date.now();
         const { serverTime } = await res.json();
 
-        const postConsume = (syncEndTime - syncStartTime) / 2;
+        // 一般 resp download 时间远小于 TTFB
+        const postConsume = (syncEndTime - syncStartTime) / 3;
 
         // 每次同步再次计算平均偏移时间
         this.postConsumes.push(postConsume);
+
+        console.info(`本次同步耗时 ${postConsume.toFixed(3)} ms`);
 
         // 只取最后20个样本，多了干扰
         if (this.postConsumes.length > 20) {
@@ -541,7 +556,7 @@ export default class MonkeyMaster {
                 '\x1b[36m%s\x1b[0m',
                 `[当前时间${dateFormat(
                     new Date(jdTime),
-                    'yyyy-dd-MM HH:mm:ss.SSS'
+                    'yyyy-MM-dd HH:mm:ss.SSS'
                 )}] 距离抢购还剩 ${timeRemainSec} 秒`
             );
 
@@ -702,15 +717,15 @@ export default class MonkeyMaster {
             },
         });
 
-        const res = await mFetch(url, { timeout: 1000 });
-
         let stockInfo;
 
-        if (res.ok) {
-            try {
+        try {
+            const res = await mFetch(url, { timeout: 1000 });
+
+            if (res.ok) {
                 stockInfo = str2Json(await res.text());
-            } catch (error) {}
-        }
+            }
+        } catch {}
 
         return stockInfo;
     }
