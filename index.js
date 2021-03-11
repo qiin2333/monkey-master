@@ -5,8 +5,8 @@ import { validateSkuids } from './util/validation.js';
 const CONFIG = await loadJsonFile('conf.json');
 
 let skuids = prompt(
-    '输入抢购skuid,可以是多个，以逗号(,)分割',
-    '100016691566'
+    '输入抢购skuid[*件数]，sku可以是多个，以逗号(,)分割，例如：',
+    '100016691566*1, 100015521042*3'
 ).trim().split(',');
 
 const ins = new MonkeyMaster({
@@ -63,7 +63,7 @@ switch (mode) {
             '输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS'
         );
 
-        if (await ins.seckillOnTime(secKillTime, 1)) {
+        if (await ins.seckillOnTime(secKillTime)) {
             await fetch(
                 `https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it 🍌🍌🍌🍌🍌`
             );

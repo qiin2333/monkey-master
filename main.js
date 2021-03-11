@@ -68,6 +68,14 @@ export default class MonkeyMaster {
 
         logger.info('登录成功了，来造作吧！');
 
+        this.skuids = this.skuids.map((sku) => {
+            const skuInfo = sku.split('*');
+            return {
+                skuid: skuInfo[0],
+                count: skuInfo[1] || 1,
+            };
+        });
+
         await this.getUserInfo();
         await this.cancelSelectCartSkus();
     }
@@ -249,16 +257,12 @@ export default class MonkeyMaster {
      */
     async addCart(skuids = []) {
         let url = 'https://cart.jd.com/gate.action';
-        const payload = {
-            pcount: 1,
-            ptype: 1,
-        };
 
-        for (let skuid of skuids) {
+        for (let [skuid, count] of skuids) {
             url = buildUrl(url, {
                 queryParams: {
                     pid: skuid,
-                    ...payload,
+                    pcount: count,
                 },
             });
 
@@ -439,14 +443,15 @@ export default class MonkeyMaster {
         await runOrder();
     }
 
-    async seckillOnTime(time, num = 1) {
+    async seckillOnTime(time) {
         if (!time) return;
         const setTimeStamp = Date.parse(time);
+        const [skuid, count] = this.skuids[0];
 
         const ko = new SecKill({
             ...this.options,
-            skuid: this.skuids[0],
-            num,
+            skuid,
+            num: count,
             headers: this.headers,
         });
 
@@ -489,11 +494,12 @@ export default class MonkeyMaster {
     async fqkillOnTime(time, num = 1) {
         if (!time) return;
         const setTimeStamp = Date.parse(time);
+        const [skuid, count] = this.skuids[0];
 
         const fq = new FqKill({
             ...this.options,
-            skuid: this.skuids[0],
-            num,
+            skuid,
+            num: count,
             addr: this.addr,
             headers: this.headers,
         });
@@ -527,19 +533,19 @@ export default class MonkeyMaster {
         const { serverTime } = await res.json();
 
         // 一般 resp download 时间远小于 TTFB
-        const postConsume = (syncEndTime - syncStartTime) / 3;
+        const postConsume = parseInt((syncEndTime - syncStartTime) / 2, 10);
 
         // 每次同步再次计算平均偏移时间
         this.postConsumes.push(postConsume);
 
-        console.info(`本次同步耗时 ${postConsume.toFixed(3)} ms`);
+        console.info(`本次同步耗时 ${postConsume} ms`);
 
         // 只取最后20个样本，多了干扰
         if (this.postConsumes.length > 20) {
             this.postConsumes.shift();
         }
 
-        this.avgTimeOffset = numAvg(this.postConsumes);
+        this.avgTimeOffset = numAvg(this.postConsumes) / 2;
 
         return serverTime + postConsume + this.avgTimeOffset;
     }
@@ -585,7 +591,7 @@ export default class MonkeyMaster {
      * @memberof MonkeyMaster
      */
     async buySingleSkuInStock(interval = 5) {
-        const skuid = this.skuids[0];
+        const [skuid, count] = this.skuids[0];
 
         await this.prepareToOrder(skuid);
 
@@ -596,7 +602,7 @@ export default class MonkeyMaster {
             );
 
             if (!skuStockInfo) {
-                logger.debug(`${this.skuids} 库存查询异常，重新查询`);
+                logger.debug(`${skuid} 库存查询异常，重新查询`);
                 continue;
             }
 
@@ -622,18 +628,20 @@ export default class MonkeyMaster {
     async buyMultiSkusInStock(interval = 5) {
         let theSkuInStock = null;
 
+        const skuids = this.skuids.map((sku) => sku.skuid);
+
         while (!theSkuInStock) {
             const skuStockInfo = await this.getSkuStockInfo(
-                this.skuids,
+                skuids,
                 this.areaId
             );
 
             if (!skuStockInfo) {
-                logger.debug(`${this.skuids} 库存查询异常，重新查询`);
+                logger.debug(`${skuids} 库存查询异常，重新查询`);
                 continue;
             }
 
-            theSkuInStock = this.skuids.find((skuid) =>
+            theSkuInStock = skuids.find((skuid) =>
                 isInStock(skuStockInfo[skuid])
             );
 
@@ -641,9 +649,7 @@ export default class MonkeyMaster {
 
             const runInterval = random.real(2, interval);
 
-            logger.debug(
-                `${this.skuids} 暂无库存，${runInterval} 秒后再次查询`
-            );
+            logger.debug(`${skuids} 暂无库存，${runInterval} 秒后再次查询`);
 
             await sleep(runInterval);
         }
