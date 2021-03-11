@@ -258,11 +258,12 @@ export default class MonkeyMaster {
     async addCart(skuids = []) {
         let url = 'https://cart.jd.com/gate.action';
 
-        for (let [skuid, count] of skuids) {
+        for (let { skuid, count } of skuids) {
             url = buildUrl(url, {
                 queryParams: {
                     pid: skuid,
                     pcount: count,
+                    ptype: 1,
                 },
             });
 
@@ -434,7 +435,7 @@ export default class MonkeyMaster {
         const runOrder = async () => {
             // 流式并行处理加快速度，但可能出错
             await Promise.race([this.addCart(this.skuids), sleep(0.06)]);
-            await Promise.race([this.getOrderInfo(), sleep(0.5)]);
+            await Promise.race([this.getOrderInfo(), sleep(0.4)]);
             await this.submitOrder();
         };
 
@@ -446,7 +447,7 @@ export default class MonkeyMaster {
     async seckillOnTime(time) {
         if (!time) return;
         const setTimeStamp = Date.parse(time);
-        const [skuid, count] = this.skuids[0];
+        const { skuid, count } = this.skuids[0];
 
         const ko = new SecKill({
             ...this.options,
@@ -494,7 +495,7 @@ export default class MonkeyMaster {
     async fqkillOnTime(time, num = 1) {
         if (!time) return;
         const setTimeStamp = Date.parse(time);
-        const [skuid, count] = this.skuids[0];
+        const { skuid, count } = this.skuids[0];
 
         const fq = new FqKill({
             ...this.options,
@@ -591,7 +592,7 @@ export default class MonkeyMaster {
      * @memberof MonkeyMaster
      */
     async buySingleSkuInStock(interval = 5) {
-        const [skuid, count] = this.skuids[0];
+        const { skuid, count } = this.skuids[0];
 
         await this.prepareToOrder(skuid);
 
