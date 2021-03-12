@@ -6,6 +6,9 @@ import { exec } from 'https://deno.land/x/exec/mod.ts';
 import rua from 'https://deno.land/x/rua/mod.js';
 import Random from 'https://deno.land/x/random@v1.1.2/Random.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
+import UPNG from 'https://cdn.skypack.dev/@pdf-lib/upng';
+import jsQR from 'https://cdn.skypack.dev/jsqr';
+import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
@@ -112,6 +115,15 @@ export default class MonkeyMaster {
         });
 
         const buffer = await blob.arrayBuffer();
+
+        const img = UPNG.decode(buffer);
+        const { data } = jsQR(
+            new Uint8ClampedArray(UPNG.toRGBA8(img)[0]),
+            img.width,
+            img.height
+        );
+        qrcodeTerminal.generate(data, { small: true });
+
         const unit8arr = new Deno.Buffer(buffer).bytes();
         Deno.writeFileSync('qrcode.png', unit8arr);
 
