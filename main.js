@@ -561,7 +561,10 @@ export default class MonkeyMaster {
 
             console.info(
                 '\x1b[36m%s\x1b[0m',
-                `[当前时间${dateFormat(
+                `[当前本地时间：${dateFormat(
+                    new Date(),
+                    'yyyy-MM-dd HH:mm:ss.SSS'
+                )}，JD时间：${dateFormat(
                     new Date(jdTime),
                     'yyyy-MM-dd HH:mm:ss.SSS'
                 )}] 距离抢购还剩 ${timeRemainSec} 秒`
@@ -611,7 +614,7 @@ export default class MonkeyMaster {
 
             const runInterval = random.real(2, interval);
 
-            logger.debug(`${skuid} 暂无库存，${runInterval} 秒后再次查询`);
+            logger.info(`${skuid} 暂无库存，${runInterval} 秒后再次查询`);
 
             await sleep(runInterval);
         }
@@ -650,7 +653,7 @@ export default class MonkeyMaster {
 
             const runInterval = random.real(2, interval);
 
-            logger.debug(`${skuids} 暂无库存，${runInterval} 秒后再次查询`);
+            logger.info(`${skuids} 暂无库存，${runInterval} 秒后再次查询`);
 
             await sleep(runInterval);
         }
