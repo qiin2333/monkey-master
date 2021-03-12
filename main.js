@@ -9,6 +9,7 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 import UPNG from 'https://cdn.skypack.dev/@pdf-lib/upng';
 import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
+import { cheerio } from 'https://deno.land/x/cheerio@1.0.4/mod.ts';
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
@@ -49,6 +50,7 @@ export default class MonkeyMaster {
         this.userPath = CONFIG.userPath || './cookies/';
         this.isLogged = false;
         this.postConsumes = [];
+        this.buyTime = new Date().toJSON();
     }
 
     async init() {
@@ -81,6 +83,7 @@ export default class MonkeyMaster {
 
         await this.getUserInfo();
         await this.cancelSelectCartSkus();
+        await this.getBuyTime();
     }
 
     async validateCookies() {
@@ -263,6 +266,43 @@ export default class MonkeyMaster {
         return newCookie;
     }
 
+    async getBuyTime() {
+        const { skuid, count } = this.skuids[0];
+
+        const url = buildUrl('https://item-soa.jd.com/getWareBusiness', {
+            queryParams: {
+                skuId: skuid,
+                num: count,
+                area: this.areaId,
+            },
+        });
+
+        this.headers.set('Referer', 'https://item.jd.com/');
+
+        // 尝试获取粗略开抢时间
+        const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
+        let buyTime = yuyueInfo.buyTime.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)[0];
+
+        // 如果没有预约直接预约
+        if (!yuyueInfo.yuyue) {
+            mFetch(yuyueInfo.url, { headers: this.headers });
+        }
+
+        // 尝试获取精确开抢时间
+        let exactTime;
+        try {
+            const res = await mFetch('https://yushou.jd.com/member/qualificationList.action',{ headers: this.headers });
+            const $ = cheerio.load(await res.text());
+            exactTime = $(`a[href*="${skuid}"]`)
+                .parents('.cont-box')
+                .find('input[id$=_buystime]')
+                .val();
+        } catch (e) { }
+        buyTime = exactTime ?? buyTime
+        logger.info(`${exactTime ? '' : '粗略'}开抢时间为 ${buyTime}`);
+        this.buyTime = buyTime;
+    }
+
     /**
      *
      * @param {Array} skuids
@@ -442,7 +482,7 @@ export default class MonkeyMaster {
      * @param {string} time "yyyy-MM-dd HH:mm:ss.SSS"
      */
     async buyOnTime(time) {
-        if (!time) return;
+        if (!time) time = this.buyTime;
         const setTimeStamp = Date.parse(time);
         const runOrder = async () => {
             // 流式并行处理加快速度，但可能出错
@@ -457,7 +497,7 @@ export default class MonkeyMaster {
     }
 
     async seckillOnTime(time) {
-        if (!time) return;
+        if (!time) time = this.buyTime;
         const setTimeStamp = Date.parse(time);
         const { skuid, count } = this.skuids[0];
 
@@ -505,7 +545,7 @@ export default class MonkeyMaster {
     }
 
     async fqkillOnTime(time, num = 1) {
-        if (!time) return;
+        if (!time) time = this.buyTime;
         const setTimeStamp = Date.parse(time);
         const { skuid, count } = this.skuids[0];
 
