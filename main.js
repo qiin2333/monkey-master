@@ -83,7 +83,6 @@ export default class MonkeyMaster {
 
         await this.getUserInfo();
         await this.cancelSelectCartSkus();
-        await this.getBuyTime();
     }
 
     async validateCookies() {
@@ -284,7 +283,13 @@ export default class MonkeyMaster {
             await mFetch(url, { headers: this.headers })
         ).json();
 
+        if (!yuyueInfo) {
+            logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
+            return;
+        }
+
         let buyTime;
+
         try {
             buyTime = yuyueInfo.buyTime.match(
                 /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/
@@ -292,7 +297,7 @@ export default class MonkeyMaster {
         } catch (error) {}
 
         // 如果没有预约直接预约
-        if (!yuyueInfo.yuyue) {
+        if (!yuyueInfo.yuyue && yuyueInfo.url) {
             mFetch(yuyueInfo.url, { headers: this.headers });
         }
 
@@ -309,9 +314,12 @@ export default class MonkeyMaster {
                 .find('input[id$=_buystime]')
                 .val();
         } catch (e) {}
-        buyTime = exactTime ?? buyTime;
+
+        this.buyTime = buyTime = exactTime ?? buyTime;
+
         logger.info(`${exactTime ? '' : '粗略'}开抢时间为 ${buyTime}`);
-        this.buyTime = buyTime;
+
+        return buyTime;
     }
 
     /**
@@ -498,7 +506,10 @@ export default class MonkeyMaster {
         const runOrder = async () => {
             // 流式并行处理加快速度，但可能出错
             await Promise.race([this.addCart(this.skuids), sleep(0.06)]);
-            await Promise.race([this.getOrderInfo(), sleep(0.4)]);
+            await Promise.race([
+                this.getOrderInfo(),
+                sleep(this.options.intersection || 0.4),
+            ]);
             await this.submitOrder();
         };
 
