@@ -280,8 +280,16 @@ export default class MonkeyMaster {
         this.headers.set('Referer', 'https://item.jd.com/');
 
         // 尝试获取粗略开抢时间
-        const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
-        let buyTime = yuyueInfo.buyTime.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}/)[0];
+        const { yuyueInfo } = await (
+            await mFetch(url, { headers: this.headers })
+        ).json();
+
+        let buyTime;
+        try {
+            buyTime = yuyueInfo.buyTime.match(
+                /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/
+            )[0];
+        } catch (error) {}
 
         // 如果没有预约直接预约
         if (!yuyueInfo.yuyue) {
@@ -291,14 +299,17 @@ export default class MonkeyMaster {
         // 尝试获取精确开抢时间
         let exactTime;
         try {
-            const res = await mFetch('https://yushou.jd.com/member/qualificationList.action',{ headers: this.headers });
+            const res = await mFetch(
+                'https://yushou.jd.com/member/qualificationList.action',
+                { headers: this.headers }
+            );
             const $ = cheerio.load(await res.text());
             exactTime = $(`a[href*="${skuid}"]`)
                 .parents('.cont-box')
                 .find('input[id$=_buystime]')
                 .val();
-        } catch (e) { }
-        buyTime = exactTime ?? buyTime
+        } catch (e) {}
+        buyTime = exactTime ?? buyTime;
         logger.info(`${exactTime ? '' : '粗略'}开抢时间为 ${buyTime}`);
         this.buyTime = buyTime;
     }

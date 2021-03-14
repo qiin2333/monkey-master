@@ -6,8 +6,5 @@
       "desc": "",
       "allow": ["env", "write", "read", "net", "run", "plugin"]
     }
-  },
-  "env": {
-    "TZ": "Asia/Shanghai"
   }
 }
