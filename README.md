@@ -56,6 +56,7 @@ denon start
 | ----------- | ---------------------------------------------------------------------- | -------- | -------- | --------- |
 | timeout     | 请求超时时间 单位毫秒                                                  |          | Number   | 5000      |
 | useRandomUA | 启动随机 user-agent                                                    |          | Boolean  | false     |
+| intersection | 提交提前时间                                                   |          | Number  | 0.4     |
 | userPath    | 用户信息暂存目录                                                       |          | string   | ./cookie/ |
 | password    | 支付密码                                                               | required | string   |           |
 | eid         | 设备 ID，部分系统可自动获取也可以手动配置                              |          | string   |           |
@@ -67,7 +68,7 @@ denon start
 
 - 操作之前删除购物车内的相关物品
 - 抢购时间的设置使用精确的实际时间即可，本公举通过客户端网络延迟计算了最后下单秒杀需要提前的时间
-- 增加京东金融分期接口，可从秒杀模式进入（听说这个方式节省步骤成功率较高)
+- 增加金融分期商城接口，可从秒杀模式进入（听说这个方式节省步骤成功率较高)
 - 关于抢购模式的问题可以看看这里 [issue #30](https://github.com/chou0212/monkey-master/issues/30)
 - 还有问题？[![follow us](http://pub.idqqimg.com/wpa/images/group.png "follow us")](https://qm.qq.com/cgi-bin/qm/qr?k=sgAvZ_SsEL1h0r6sgPkBn89eD0-TOmgV&jump_from=webapi)
 
