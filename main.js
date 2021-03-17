@@ -398,8 +398,6 @@ export default class MonkeyMaster {
             });
         }
 
-        logger.info(`订单结算页面响应: ${res.status}`);
-
         // TODO: parse fingerprint
         // const tdjsCode = await mFetch('https://gias.jd.com/js/td.js').then((res) =>
         //   res.text()
@@ -423,7 +421,8 @@ export default class MonkeyMaster {
             logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
         }
 
-        await this.changeOrderAddr(this.areaId);
+        await Promise.race([this.changeOrderAddr(this.areaId), sleep(0.05)]);
+        logger.info(`订单结算页面响应: ${res.status}`);
     }
 
     async submitOrder() {
@@ -579,6 +578,11 @@ export default class MonkeyMaster {
             headers: this.headers,
         });
 
+        clearInterval(this.fqCreateOrderTimer);
+        this.fqCreateOrderTimer = setInterval(() => {
+            fq.createOrder();
+        }, 5 * 60 * 1000);
+
         await fq.createOrder();
 
         const runOrder = async () => {
@@ -603,9 +607,11 @@ export default class MonkeyMaster {
 
     async timeSyncWithJD() {
         const syncStartTime = Date.now();
-        const res = await mFetch('https://a.jd.com//ajax/queryServerData.html');
+        const res = await mFetch('https://h5.360buyimg.com/ws_js/gatherInfo.js');
         const syncEndTime = Date.now();
-        const { serverTime } = await res.json();
+
+        const xTrace = res.headers.get('x-trace');
+        const serverTime = +xTrace.match(/.*;200\-(\d+)-.*/)[1];
 
         // 一般 resp download 时间远小于 TTFB
         const postConsume = parseInt((syncEndTime - syncStartTime) / 2, 10);
