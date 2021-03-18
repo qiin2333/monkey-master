@@ -379,6 +379,7 @@ export default class MonkeyMaster {
         if (this.isPreSale) {
             const headers = new Headers(this.headers);
             headers.set('content-type', 'application/x-www-form-urlencoded');
+
             res = await mFetch(
                 'https://trade.jd.com/shopping/async/obtainOrderExt.action',
                 {
@@ -397,6 +398,10 @@ export default class MonkeyMaster {
                 headers: this.headers,
             });
         }
+
+        await Promise.race([this.changeOrderAddr(this.areaId), sleep(0.05)]);
+
+        logger.info(`订单结算页面响应: ${res.status}`);
 
         // TODO: parse fingerprint
         // const tdjsCode = await mFetch('https://gias.jd.com/js/td.js').then((res) =>
@@ -420,9 +425,6 @@ export default class MonkeyMaster {
 
             logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
         }
-
-        await Promise.race([this.changeOrderAddr(this.areaId), sleep(0.05)]);
-        logger.info(`订单结算页面响应: ${res.status}`);
     }
 
     async submitOrder() {
@@ -607,11 +609,14 @@ export default class MonkeyMaster {
 
     async timeSyncWithJD() {
         const syncStartTime = Date.now();
-        const res = await mFetch('https://h5.360buyimg.com/ws_js/gatherInfo.js');
+        const res = await mFetch(
+            'https://h5.360buyimg.com/ws_js/gatherInfo.js'
+        );
         const syncEndTime = Date.now();
 
         const xTrace = res.headers.get('x-trace');
-        const serverTime = +xTrace.match(/.*;200\-(\d+)-.*/)[1];
+        const resTimeStr = xTrace?.match(/.*;200\-(\d+)\-.*/);
+        const serverTime = resTimeStr ? +resTimeStr[1] : Date.now();
 
         // 一般 resp download 时间远小于 TTFB
         const postConsume = parseInt((syncEndTime - syncStartTime) / 2, 10);
