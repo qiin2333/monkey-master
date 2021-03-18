@@ -609,11 +609,8 @@ export default class MonkeyMaster {
 
     async timeSyncWithJD() {
         const syncStartTime = Date.now();
-        const res = await mFetch(
-            'https://h5.360buyimg.com/ws_js/gatherInfo.js'
-        );
+        const res = await mFetch(`https://gias.jd.com/js/td.js?t=${syncStartTime}`);
         const syncEndTime = Date.now();
-
         const xTrace = res.headers.get('x-trace');
         const resTimeStr = xTrace?.match(/.*;200\-(\d+)\-.*/);
         const serverTime = resTimeStr ? +resTimeStr[1] : Date.now();
