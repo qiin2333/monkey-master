@@ -758,20 +758,20 @@ export default class MonkeyMaster {
      * @param {Object} skuInfo
      * @returns
      */
-    async prepareToOrder({ skuid, count }) {
+    async prepareToOrder({ skuid, count = 1 }) {
         const cart = await this.getCartInfo();
         const skuDetails = cart.find(({ item }) => {
             if (item.items && item.items.length) {
                 return item.items.some(({ item }) => item.Id === skuid);
             } else {
-                console.log(item.Id, skuid);
+                // console.log(item.Id, skuid);
                 return item.Id === skuid;
             }
         });
 
         if (skuDetails) {
             logger.info(`${skuid}在购物车中，尝试勾选ing`);
-            const isSelected = await this.cartItemSelectToggle(skuDetails, 1);
+            const isSelected = await this.cartItemSelectToggle(skuDetails, count);
 
             if (!isSelected) {
                 return logger.critical('商品勾选失败，检查配置');
