@@ -764,7 +764,7 @@ export default class MonkeyMaster {
             if (item.items && item.items.length) {
                 return item.items.some(({ item }) => item.Id === skuid);
             } else {
-                console.log(item.Id, skuid);
+                // console.log(item.Id, skuid);
                 return item.Id === skuid;
             }
         });
