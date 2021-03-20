@@ -679,7 +679,7 @@ export default class MonkeyMaster {
     async buySingleSkuInStock(interval = 5) {
         const { skuid, count } = this.skuids[0];
 
-        await this.prepareToOrder(skuid);
+        await this.prepareToOrder(this.skuids[0]);
 
         while (true) {
             const skuStockInfo = await this.getSkuStockInfo(
@@ -727,7 +727,7 @@ export default class MonkeyMaster {
                 continue;
             }
 
-            theSkuInStock = skuids.find((skuid) =>
+            theSkuInStock = this.skuids.find(({ skuid }) =>
                 isInStock(skuStockInfo[skuid])
             );
 
@@ -740,7 +740,7 @@ export default class MonkeyMaster {
             await sleep(runInterval);
         }
 
-        logger.info(`${theSkuInStock} 好像有货了喔，下单试试`);
+        logger.info(`${theSkuInStock.skuid} 好像有货了喔，下单试试`);
 
         await this.prepareToOrder(theSkuInStock);
 
@@ -755,10 +755,10 @@ export default class MonkeyMaster {
     /**
      *
      * 下单准备（清空-加车-结算）
-     * @param {Number} skuid
+     * @param {Object} skuInfo
      * @returns
      */
-    async prepareToOrder(skuid) {
+    async prepareToOrder({ skuid, count }) {
         const cart = await this.getCartInfo();
         const skuDetails = cart.find(({ item }) => {
             if (item.items && item.items.length) {
@@ -778,7 +778,7 @@ export default class MonkeyMaster {
             }
         } else {
             logger.info(`${skuid} 不在购物车中，尝试加车ing`);
-            await this.addCart([skuid]);
+            await this.addCart([{ skuid, count }]);
         }
 
         await this.getOrderInfo();
