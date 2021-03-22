@@ -611,7 +611,6 @@ export default class MonkeyMaster {
         const syncStartTime = Date.now();
         const res = await mFetch(`https://gias.jd.com/js/td.js?t=${syncStartTime}`);
         const syncEndTime = Date.now();
-
         const xTrace = res.headers.get('x-trace');
         const resTimeStr = xTrace?.match(/.*;200\-(\d+)\-.*/);
         const serverTime = resTimeStr ? +resTimeStr[1] : Date.now();
@@ -680,7 +679,7 @@ export default class MonkeyMaster {
     async buySingleSkuInStock(interval = 5) {
         const { skuid, count } = this.skuids[0];
 
-        await this.prepareToOrder(skuid);
+        await this.prepareToOrder(this.skuids[0]);
 
         while (true) {
             const skuStockInfo = await this.getSkuStockInfo(
@@ -728,7 +727,7 @@ export default class MonkeyMaster {
                 continue;
             }
 
-            theSkuInStock = skuids.find((skuid) =>
+            theSkuInStock = this.skuids.find(({ skuid }) =>
                 isInStock(skuStockInfo[skuid])
             );
 
@@ -741,7 +740,7 @@ export default class MonkeyMaster {
             await sleep(runInterval);
         }
 
-        logger.info(`${theSkuInStock} 好像有货了喔，下单试试`);
+        logger.info(`${theSkuInStock.skuid} 好像有货了喔，下单试试`);
 
         await this.prepareToOrder(theSkuInStock);
 
@@ -756,30 +755,30 @@ export default class MonkeyMaster {
     /**
      *
      * 下单准备（清空-加车-结算）
-     * @param {Number} skuid
+     * @param {Object} skuInfo
      * @returns
      */
-    async prepareToOrder(skuid) {
+    async prepareToOrder({ skuid, count = 1 }) {
         const cart = await this.getCartInfo();
         const skuDetails = cart.find(({ item }) => {
             if (item.items && item.items.length) {
                 return item.items.some(({ item }) => item.Id === skuid);
             } else {
-                console.log(item.Id, skuid);
+                // console.log(item.Id, skuid);
                 return item.Id === skuid;
             }
         });
 
         if (skuDetails) {
             logger.info(`${skuid}在购物车中，尝试勾选ing`);
-            const isSelected = await this.cartItemSelectToggle(skuDetails, 1);
+            const isSelected = await this.cartItemSelectToggle(skuDetails, count);
 
             if (!isSelected) {
                 return logger.critical('商品勾选失败，检查配置');
             }
         } else {
             logger.info(`${skuid} 不在购物车中，尝试加车ing`);
-            await this.addCart([skuid]);
+            await this.addCart([{ skuid, count }]);
         }
 
         await this.getOrderInfo();
