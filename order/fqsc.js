@@ -18,7 +18,7 @@ export default class SecKill {
         this.headers.set('Origin', 'https://q.jd.com');
         this.headers.set(
             'User-Agent',
-            'Mozilla/5.0 (Linux; Android 10; M2006J10C Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045426 Mobile Safari/537.36/application=JDJR-App&clientType=android&deviceId=76dd6967b3a79461&token_eid=jdd01W4TUIK3A25X6UR22VHGKJPZEUFPO5UTVGONQWFA6DWUGV4FWUVJ6NFGSKAE6YXJGTMTK37SLYHCQU5AM4MEL4N3VL3PLYV5H3E54WSY01234567&andr_id=76dd6967b3a79461&oa_id=d0d2affd67619f6c&src=xiaomi&version=6.0.60&clientVersion=6.0.60&osVersion=10&osName=M2006J10C&isUpdate=0&HiClVersion=6.0.60&netWork=1&netWorkType=4&CpayJS=UnionPay/1.0 JDJR&sPoint=&*#@jdPaySDK*#@jdPayChannel=jdFinance&jdPayChannelVersion=6.0.60&jdPaySdkVersion=3.00.35.00&androidBrand=Redmi&androidManufacturer=Xiaomi&jdPayClientName=Android*#@jdPaySDK*#@'
+            'Mozilla/5.0 (Linux; Android 10; M2006J10C Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045426 Mobile Safari/537.36/application=JDJR-App&clientType=android&src=xiaomi&version=6.0.60&clientVersion=6.0.60&osVersion=10&osName=M2006J10C&isUpdate=0&HiClVersion=6.0.60&netWork=1&netWorkType=4&CpayJS=UnionPay/1.0 JDJR&sPoint=&*#@jdPaySDK*#@jdPayChannel=jdFinance&jdPayChannelVersion=6.0.60&jdPaySdkVersion=3.00.35.00&androidBrand=Redmi&androidManufacturer=Xiaomi&jdPayClientName=Android*#@jdPaySDK*#@'
         );
         this.headers.set('content-type', 'application/x-www-form-urlencoded');
         this.headers.set('X-Requested-With', 'com.jd.jrapp');
@@ -78,7 +78,7 @@ export default class SecKill {
         urlencoded.append('body', JSON.stringify(payload));
         urlencoded.append('t', String(Date.now()));
         urlencoded.append('client', 'jddx_m');
-        urlencoded.append('clientVersion', '8.0.0');
+        urlencoded.append('clientVersion', '8.1.8');
 
         const res = await mFetch(url, {
             method: 'POST',
@@ -96,7 +96,7 @@ export default class SecKill {
         const headers = this.headers;
         headers.set(
             'Referer',
-            `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&xxfSceneId=A340047790792949760&cu=true&utm_source=kong&utm_medium=tuiguang&utm_campaign=t_1000603438_&utm_term=8b17034a6ef1421eb782eb79bdec6536`
+            `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&xxfSceneId=A340047790792949760`
         );
 
         const { addr } = this.options;
@@ -208,7 +208,7 @@ export default class SecKill {
         urlencoded.append('body', JSON.stringify(payload));
         urlencoded.append('t', String(Date.now()));
         urlencoded.append('client', 'jddx_m');
-        urlencoded.append('clientVersion', '8.0.0');
+        urlencoded.append('clientVersion', '8.1.8');
 
         const res = await mFetch(url, {
             method: 'POST',
