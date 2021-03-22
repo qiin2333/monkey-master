@@ -57,6 +57,7 @@ switch (mode) {
         console.log('请确保购物车中待抢购商品已删除!!!');
 
         await ins[buyOnTimeFunc](buyTime);
+        await ins.buySingleSkuInStock();
         break;
 
     case '3':

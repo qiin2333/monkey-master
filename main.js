@@ -621,16 +621,14 @@ export default class MonkeyMaster {
         // 每次同步再次计算平均偏移时间
         this.postConsumes.push(postConsume);
 
-        console.info(`本次同步耗时 ${postConsume} ms`);
+        console.info(`本次同步耗时 ${postConsume * 2} ms`);
 
         // 只取最后20个样本，多了干扰
         if (this.postConsumes.length > 20) {
             this.postConsumes.shift();
         }
 
-        this.avgTimeOffset = numAvg(this.postConsumes) / 2;
-
-        return serverTime + postConsume + this.avgTimeOffset;
+        return serverTime + numAvg(this.postConsumes);
     }
 
     async waiting4Start(setTimeStamp) {
