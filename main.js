@@ -124,12 +124,12 @@ export default class MonkeyMaster {
             img.width,
             img.height
         );
-        qrcodeTerminal.generate(data, { small: true });
+        return qrcodeTerminal.generate(data, { small: true });
 
-        const unit8arr = new Deno.Buffer(buffer).bytes();
-        Deno.writeFileSync('qrcode.png', unit8arr);
+        // const unit8arr = new Deno.Buffer(buffer).bytes();
+        // Deno.writeFileSync('qrcode.png', unit8arr);
 
-        return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
+        // return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
     }
 
     async getQRCodeTicket() {
@@ -509,7 +509,7 @@ export default class MonkeyMaster {
             await Promise.race([this.addCart(this.skuids), sleep(0.06)]);
             await Promise.race([
                 this.getOrderInfo(),
-                sleep(this.options.intersection || 0.4),
+                sleep(this.options.intersection || 0.5),
             ]);
             await this.submitOrder();
         };

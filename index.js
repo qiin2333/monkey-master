@@ -5,8 +5,8 @@ import { validateSkuids } from './util/validation.js';
 const CONFIG = await loadJsonFile('conf.json');
 
 let skuids = prompt(
-    '输入抢购skuid[*件数]，sku可以是多个，以逗号(,)分割，例如：',
-    '100016691566*1, 100015521042*3'
+    '输入抢购skuid[*件数]，sku可以是多个，以逗号(,)分割，如中括号里所示，输入不需要带括号：',
+    '100016691566, 100015521042*3'
 )
     .trim()
     .split(',');
@@ -57,7 +57,10 @@ switch (mode) {
         console.log('请确保购物车中待抢购商品已删除!!!');
 
         await ins[buyOnTimeFunc](buyTime);
-        await ins.buySingleSkuInStock();
+
+        prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y' &&
+            (await ins.buySingleSkuInStock());
+            
         break;
 
     case '3':
