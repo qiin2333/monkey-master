@@ -58,9 +58,10 @@ switch (mode) {
 
         await ins[buyOnTimeFunc](buyTime);
 
-        prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y' &&
-            (await ins.buySingleSkuInStock());
-            
+        prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y'
+            ? await ins.buySingleSkuInStock()
+            : Deno.exit();
+
         break;
 
     case '3':

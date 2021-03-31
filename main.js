@@ -279,11 +279,12 @@ export default class MonkeyMaster {
         this.headers.set('Referer', 'https://item.jd.com/');
 
         // 尝试获取粗略开抢时间
-        const { yuyueInfo } = await (
-            await mFetch(url, { headers: this.headers })
-        ).json();
+        try {
+            const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
+            this.yuyueInfo = yuyueInfo;
+        } catch (error) {}
 
-        if (!yuyueInfo) {
+        if (!this.yuyueInfo) {
             logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
             return;
         }
@@ -291,14 +292,14 @@ export default class MonkeyMaster {
         let buyTime;
 
         try {
-            buyTime = yuyueInfo.buyTime.match(
+            buyTime = this.yuyueInfo.buyTime.match(
                 /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/
             )[0];
         } catch (error) {}
 
         // 如果没有预约直接预约
-        if (!yuyueInfo.yuyue && yuyueInfo.url) {
-            mFetch(yuyueInfo.url, { headers: this.headers });
+        if (!this.yuyueInfo.yuyue && this.yuyueInfo.url) {
+            mFetch(this.yuyueInfo.url, { headers: this.headers });
         }
 
         // 尝试获取精确开抢时间
@@ -609,7 +610,9 @@ export default class MonkeyMaster {
 
     async timeSyncWithJD() {
         const syncStartTime = Date.now();
-        const res = await mFetch(`https://gias.jd.com/js/td.js?t=${syncStartTime}`);
+        const res = await mFetch(
+            `https://gias.jd.com/js/td.js?t=${syncStartTime}`
+        );
         const syncEndTime = Date.now();
         const xTrace = res.headers.get('x-trace');
         const resTimeStr = xTrace?.match(/.*;200\-(\d+)\-.*/);
@@ -769,7 +772,10 @@ export default class MonkeyMaster {
 
         if (skuDetails) {
             logger.info(`${skuid}在购物车中，尝试勾选ing`);
-            const isSelected = await this.cartItemSelectToggle(skuDetails, count);
+            const isSelected = await this.cartItemSelectToggle(
+                skuDetails,
+                count
+            );
 
             if (!isSelected) {
                 return logger.critical('商品勾选失败，检查配置');
