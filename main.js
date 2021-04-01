@@ -278,30 +278,6 @@ export default class MonkeyMaster {
 
         this.headers.set('Referer', 'https://item.jd.com/');
 
-        // 尝试获取粗略开抢时间
-        try {
-            const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
-            this.yuyueInfo = yuyueInfo;
-        } catch (error) {}
-
-        if (!this.yuyueInfo) {
-            logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
-            return;
-        }
-
-        let buyTime;
-
-        try {
-            buyTime = this.yuyueInfo.buyTime.match(
-                /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/
-            )[0];
-        } catch (error) {}
-
-        // 如果没有预约直接预约
-        if (!this.yuyueInfo.yuyue && this.yuyueInfo.url) {
-            mFetch(this.yuyueInfo.url, { headers: this.headers });
-        }
-
         // 尝试获取精确开抢时间
         let exactTime;
         try {
@@ -316,9 +292,28 @@ export default class MonkeyMaster {
                 .val();
         } catch (e) {}
 
+        // 尝试获取粗略开抢时间
+        let buyTime;
+        try {
+            const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
+            this.yuyueInfo = yuyueInfo;
+        } catch (error) {}
+
+        try {
+            buyTime = this.yuyueInfo.buyTime.match(
+                /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/
+            )[0];
+        } catch (error) {}
+
         this.buyTime = buyTime = exactTime ?? buyTime;
 
         logger.info(`${exactTime ? '' : '粗略'}开抢时间为 ${buyTime}`);
+
+        if (this.yuyueInfo && !this.yuyueInfo.yuyue && this.yuyueInfo.url) {
+            mFetch(this.yuyueInfo.url, { headers: this.headers });
+        }
+
+        if (!buyTime) {logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);}
 
         return buyTime;
     }
