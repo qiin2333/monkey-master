@@ -47,7 +47,7 @@ switch (mode) {
 
     case '2':
         const buyOnTimeFunc =
-            prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', 1) === '1'
+            prompt('选择下单方式，1: 京东 web, 2: 京东金融 APP', '1') === '1'
                 ? 'buyOnTime'
                 : 'fqkillOnTime';
         const buyTime =
