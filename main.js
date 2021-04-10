@@ -494,6 +494,73 @@ export default class MonkeyMaster {
     }
 
     /**
+     * 获取预约地址
+     * @param {string} skuId "10025432414406"
+     */
+    async getReserveUrl(skuId) {
+        const url = buildUrl('https://yushou.jd.com/youshouinfo.action', {
+            queryParams: {
+                callback: 'fetchJSON',
+                sku: skuId,
+            },
+        });
+
+        let res = await mFetch(
+            url,
+            {
+                method: 'GET',
+                referer: `https://item.jd.com/${skuId}.html`,
+                headers: this.headers,
+            }
+        );
+        // await logger.info(await res.text())
+        const retJson = str2Json(await res.text());
+        return retJson['url'] ? 'https:' + retJson['url'] : ''
+    }
+
+    /**
+     * 根据skuId预约商品
+     * @param {string} skuId "10025432414406"
+     */
+    async makeReserve(skuId) {
+        if (!skuId) return;
+
+        const reserveUrl = await this.getReserveUrl(skuId);
+
+        if (!reserveUrl) {
+            logger.info(`${skuId} 非预约商品`);
+            return;
+        }
+
+        const res = await mFetch(
+            reserveUrl,
+            {
+                method: 'GET',
+                referer: `https://item.jd.com/${skuId}.html`,
+                headers: this.headers,
+            }
+        );
+
+        const $ = cheerio.load(await res.text());
+        if ($('p.bd-right-code').text().trim()) {
+            logger.info(`${skuId} 预约结果: 需要验证码, 无法预约`);
+            return;
+        }
+        const reserveResult = $('p.bd-right-result').text().trim();
+        logger.info(`${skuId} 预约结果: ${reserveResult}`);
+    }
+
+    /**
+     * 预约所有商品
+     */
+    async reserveAll() {
+        logger.info('尝试自动预约:')
+        for (let { skuid, count } of this.skuids) {
+            await this.makeReserve(skuid)
+        }
+    }
+
+    /**
      * 定时下单
      * @param {string} time "yyyy-MM-dd HH:mm:ss.SSS"
      */
