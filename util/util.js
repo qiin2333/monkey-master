@@ -2,7 +2,7 @@
  *
  */
 export function str2Json(str) {
-    return JSON.parse(str.replace(/^.*?\(/, '').replace(/\)$/m, ''));
+    return JSON.parse(str.replace(/^.*?\(/, '').replace(/\);?$/m, ''));
 }
 
 /**

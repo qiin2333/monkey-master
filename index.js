@@ -1,6 +1,5 @@
 import MonkeyMaster from './main.js';
 import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
-import { validateSkuids } from './util/validation.js';
 
 const CONFIG = await loadJsonFile('conf.json');
 
@@ -20,6 +19,7 @@ const ins = new MonkeyMaster({
 });
 
 await ins.init();
+
 
 // 该商品需要实名认证才可抢购的情况 无法通过金融通道秒杀
 const mode = prompt(
@@ -56,6 +56,8 @@ switch (mode) {
 
         console.log('请确保购物车中待抢购商品已删除!!!');
 
+        // 自动预约
+        await ins.reserveAll();
         await ins[buyOnTimeFunc](buyTime);
 
         prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y'
