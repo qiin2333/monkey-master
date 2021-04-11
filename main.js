@@ -40,6 +40,7 @@ export default class MonkeyMaster {
         this.options = options;
         this.skuids = options.skuids || [];
         this.autoReserve = CONFIG.autoReserve
+        this.openQrInNewWindow = CONFIG.openQrInNewWindow
         this.userAgent = CONFIG.useRandomUA
             ? rua('desktop')
             : DEFAULT_USER_AGENT;
@@ -125,7 +126,9 @@ export default class MonkeyMaster {
             img.width,
             img.height
         );
-        qrcodeTerminal.generate(data, { small: true });
+        if (!this.openQrInNewWindow) {
+            return qrcodeTerminal.generate(data, { small: true });
+        }
 
         const unit8arr = new Deno.Buffer(buffer).bytes();
         Deno.writeFileSync('qrcode.png', unit8arr);

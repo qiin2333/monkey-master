@@ -8,5 +8,6 @@
   },
   "userPath": "./cookies/",
   "sckey": "",
-  "autoReserve": true
+  "autoReserve": true,
+  "openQrInNewWindow": false
 }

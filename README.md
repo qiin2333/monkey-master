@@ -56,14 +56,15 @@ denon start
 | 参数         | 说明                                                           | 是否必须 | 数据类型 | 默认值    |
 | ------------ | -------------------------------------------------------------- | -------- | -------- | --------- |
 | timeout      | 请求超时时间 单位毫秒                                          |          | Number   | 5000      |
-| useRandomUA  | 启动随机 user-agent                                            |          | Boolean  | false     |
+| useRandomUA  | 启动随机 user-agent                                           |          | Boolean  | false     |
 | intersection | 提交订单请求重叠时间                                           |          | Number   | 0.4       |
 | userPath     | 用户信息暂存目录                                               |          | string   | ./cookie/ |
 | password     | 支付密码                                                       | required | string   |           |
 | eid          | 设备 ID，部分系统可自动获取也可以手动配置                      |          | string   |           |
 | fp           | fingerprint，部分系统可自动获取也可以手动配置                  |          | string   |           |
 | sckey        | 用于下单成功的消息推送，这里借用第三方工具 http://sc.ftqq.com/ |          | string   |           |
-| autoReserve  | 在定时下单时是否开启自动预约(当需要输入验证码时会跳过预约)      |          | bool     |   true    |
+| autoReserve  | 在定时下单时是否开启自动预约(当需要输入验证码时会跳过预约)      |          | Boolean    |   true    |
+| openQrInNewWindow  | 在新窗口中打开二维码，为false时会在terminal中打开二维码 |         | Boolean  |   false    |
 
 ### 最佳实践
 
