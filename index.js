@@ -57,7 +57,9 @@ switch (mode) {
         console.log('请确保购物车中待抢购商品已删除!!!');
 
         // 自动预约
-        await ins.reserveAll();
+        if (ins.autoReserve) {
+            await ins.reserveAll();
+        }
         await ins[buyOnTimeFunc](buyTime);
 
         prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y'

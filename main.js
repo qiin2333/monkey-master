@@ -39,6 +39,7 @@ export default class MonkeyMaster {
     constructor(options = {}) {
         this.options = options;
         this.skuids = options.skuids || [];
+        this.autoReserve = CONFIG.autoReserve
         this.userAgent = CONFIG.useRandomUA
             ? rua('desktop')
             : DEFAULT_USER_AGENT;
