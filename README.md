@@ -63,6 +63,7 @@ denon start
 | eid          | 设备 ID，部分系统可自动获取也可以手动配置                      |          | string   |           |
 | fp           | fingerprint，部分系统可自动获取也可以手动配置                  |          | string   |           |
 | sckey        | 用于下单成功的消息推送，这里借用第三方工具 http://sc.ftqq.com/ |          | string   |           |
+| autoReserve  | 在定时下单时是否开启自动预约(当需要输入验证码时会跳过预约)      |          | bool     |   true    |
 
 ### 最佳实践
 
