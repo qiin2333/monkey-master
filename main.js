@@ -125,12 +125,12 @@ export default class MonkeyMaster {
             img.width,
             img.height
         );
-        return qrcodeTerminal.generate(data, { small: true });
+        qrcodeTerminal.generate(data, { small: true });
 
-        // const unit8arr = new Deno.Buffer(buffer).bytes();
-        // Deno.writeFileSync('qrcode.png', unit8arr);
+        const unit8arr = new Deno.Buffer(buffer).bytes();
+        Deno.writeFileSync('qrcode.png', unit8arr);
 
-        // return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
+        return await exec(`${isWindows ? 'cmd /c' : 'open'} qrcode.png`);
     }
 
     async getQRCodeTicket() {
@@ -694,15 +694,15 @@ export default class MonkeyMaster {
             this.postConsumes.shift();
         }
 
-        return serverTime + numAvg(this.postConsumes);
+        return serverTime;
     }
 
     async waiting4Start(setTimeStamp) {
-        let jdTime = Date.now();
+        this.jdTime = Date.now();
 
-        while (setTimeStamp > jdTime) {
-            jdTime = await this.timeSyncWithJD();
-            const timeRemainMS = setTimeStamp - jdTime;
+        while (setTimeStamp > this.jdTime) {
+            this.jdTime = await this.timeSyncWithJD();
+            const timeRemainMS = setTimeStamp - this.jdTime - numAvg(this.postConsumes);
             const timeRemainSec = (timeRemainMS / 1000).toFixed(3);
 
             console.info(
@@ -711,7 +711,7 @@ export default class MonkeyMaster {
                     new Date(),
                     'yyyy-MM-dd HH:mm:ss.SSS'
                 )}，JD时间：${dateFormat(
-                    new Date(jdTime),
+                    new Date(this.jdTime),
                     'yyyy-MM-dd HH:mm:ss.SSS'
                 )}] 距离抢购还剩 ${timeRemainSec} 秒`
             );
