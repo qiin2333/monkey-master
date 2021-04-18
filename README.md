@@ -59,7 +59,7 @@ denon start
 | useRandomUA  | 启动随机 user-agent                                           |          | Boolean  | false     |
 | intersection | 提交订单请求重叠时间                                           |          | Number   | 0.4       |
 | userPath     | 用户信息暂存目录                                               |          | string   | ./cookie/ |
-| password     | 支付密码                                                       | required | string   |           |
+| password     | 支付密码（资产使用密码，如果确认账户没有红包余额可以不配置）                                        | required | string   |           |
 | eid          | 设备 ID，部分系统可自动获取也可以手动配置                      |          | string   |           |
 | fp           | fingerprint，部分系统可自动获取也可以手动配置                  |          | string   |           |
 | sckey        | 用于下单成功的消息推送，这里借用第三方工具 http://sc.ftqq.com/ |          | string   |           |
@@ -78,4 +78,4 @@ denon start
 
 -   [x] auto get fingerprint (e.g. eid,fp).
 -   [x] 秒杀商品
--   [ ] GUI - 部分完成
+-   [ ] GUI - 改为server支持实现
