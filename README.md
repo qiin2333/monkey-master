@@ -13,6 +13,7 @@ monkey-master
 ├── main.js
 ├── install.bat             安装脚本
 ├── start.bat               运行脚本
+├── start-ui.bat            运行UI版本
 └── README.md
 ```
 
