@@ -5,6 +5,11 @@
       "cmd": "deno run --unstable --no-check index.js",
       "desc": "",
       "allow": ["env", "write", "read", "net", "run", "plugin"]
+    },
+    "serve": {
+      "cmd": "deno run --unstable --no-check server.js",
+      "desc": "",
+      "allow": ["env", "write", "read", "net", "run", "plugin"]
     }
   }
 }

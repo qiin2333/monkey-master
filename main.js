@@ -39,8 +39,8 @@ export default class MonkeyMaster {
     constructor(options = {}) {
         this.options = options;
         this.skuids = options.skuids || [];
-        this.autoReserve = CONFIG.autoReserve
-        this.openQrInNewWindow = CONFIG.openQrInNewWindow
+        this.autoReserve = CONFIG.autoReserve;
+        this.openQrInNewWindow = CONFIG.openQrInNewWindow;
         this.userAgent = CONFIG.useRandomUA
             ? rua('desktop')
             : DEFAULT_USER_AGENT;
@@ -85,6 +85,7 @@ export default class MonkeyMaster {
 
         await this.getUserInfo();
         await this.cancelSelectCartSkus();
+        return;
     }
 
     async validateCookies() {
@@ -126,6 +127,13 @@ export default class MonkeyMaster {
             img.width,
             img.height
         );
+
+        const base64Img = `data:image/png;base64, ${window.btoa(
+            String.fromCharCode(...new Uint8Array(buffer))
+        )}`;
+
+        this.res.render('qrcode.html', { codeImg: base64Img });
+
         if (!this.openQrInNewWindow) {
             return qrcodeTerminal.generate(data, { small: true });
         }
@@ -229,11 +237,11 @@ export default class MonkeyMaster {
                         `[${index}]: ${addr.addressName}-${addr.fullAddress}-${addr.mobile}`
                 )
                 .join('\n');
-            const index = prompt(
-                `选择下单地址: 默认为首个 \n${addrsMsg} \n`,
-                0
-            );
-            this.addr = addrs[index];
+            // const index = prompt(
+            //     `选择下单地址: 默认为首个 \n${addrsMsg} \n`,
+            //     0
+            // );
+            this.addr = addrs[0];
             this.areaId = genAreaId(this.addr);
             console.log(`area id 获取成功: ${this.areaId}`);
         }
@@ -299,7 +307,9 @@ export default class MonkeyMaster {
         // 尝试获取粗略开抢时间
         let buyTime;
         try {
-            const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
+            const { yuyueInfo } = await (
+                await mFetch(url, { headers: this.headers })
+            ).json();
             this.yuyueInfo = yuyueInfo;
         } catch (error) {}
 
@@ -317,7 +327,9 @@ export default class MonkeyMaster {
             mFetch(this.yuyueInfo.url, { headers: this.headers });
         }
 
-        if (!buyTime) {logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);}
+        if (!buyTime) {
+            logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
+        }
 
         return buyTime;
     }
@@ -509,17 +521,14 @@ export default class MonkeyMaster {
             },
         });
 
-        let res = await mFetch(
-            url,
-            {
-                method: 'GET',
-                referer: `https://item.jd.com/${skuId}.html`,
-                headers: this.headers,
-            }
-        );
+        let res = await mFetch(url, {
+            method: 'GET',
+            referer: `https://item.jd.com/${skuId}.html`,
+            headers: this.headers,
+        });
         // await logger.info(await res.text())
         const retJson = str2Json(await res.text());
-        return retJson['url'] ? 'https:' + retJson['url'] : ''
+        return retJson['url'] ? 'https:' + retJson['url'] : '';
     }
 
     /**
@@ -536,14 +545,11 @@ export default class MonkeyMaster {
             return;
         }
 
-        const res = await mFetch(
-            reserveUrl,
-            {
-                method: 'GET',
-                referer: `https://item.jd.com/${skuId}.html`,
-                headers: this.headers,
-            }
-        );
+        const res = await mFetch(reserveUrl, {
+            method: 'GET',
+            referer: `https://item.jd.com/${skuId}.html`,
+            headers: this.headers,
+        });
 
         const $ = cheerio.load(await res.text());
         if ($('p.bd-right-code').text().trim()) {
@@ -558,9 +564,9 @@ export default class MonkeyMaster {
      * 预约所有商品
      */
     async reserveAll() {
-        logger.info('尝试自动预约:')
+        logger.info('尝试自动预约:');
         for (let { skuid, count } of this.skuids) {
-            await this.makeReserve(skuid)
+            await this.makeReserve(skuid);
         }
     }
 
@@ -705,7 +711,8 @@ export default class MonkeyMaster {
 
         while (setTimeStamp > this.jdTime) {
             this.jdTime = await this.timeSyncWithJD();
-            const timeRemainMS = setTimeStamp - this.jdTime - numAvg(this.postConsumes);
+            const timeRemainMS =
+                setTimeStamp - this.jdTime - numAvg(this.postConsumes);
             const timeRemainSec = (timeRemainMS / 1000).toFixed(3);
 
             console.info(
