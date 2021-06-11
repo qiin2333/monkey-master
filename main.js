@@ -205,20 +205,20 @@ export default class MonkeyMaster {
     }
 
     async getUserInfo() {
-        const url = buildUrl(
-            'https://passport.jd.com/user/petName/getUserInfoForMiniJd.action',
-            {
-                queryParams: {
-                    callback: `jQuery${random.int(1000000, 9999999)}`,
-                    _: String(Date.now()),
-                },
-            }
-        );
+        // const url = buildUrl(
+        //     'https://passport.jd.com/user/petName/getUserInfoForMiniJd.action',
+        //     {
+        //         queryParams: {
+        //             callback: `jQuery${random.int(1000000, 9999999)}`,
+        //             _: String(Date.now()),
+        //         },
+        //     }
+        // );
 
-        const res = await mFetch(url, {
-            headers: this.headers,
-            redirect: 'error',
-        });
+        // const res = await mFetch(url, {
+        //     headers: this.headers,
+        //     redirect: 'error',
+        // });
 
         const addrs = await this.getUserAddr();
 
@@ -915,6 +915,7 @@ export default class MonkeyMaster {
         this.headers.set('Referer', 'https://cart.jd.com/');
 
         const res = await mFetch(url, {
+            method: 'POST',
             headers: this.headers,
             body: JSON.stringify(payload),
         });
