@@ -39,8 +39,8 @@ export default class MonkeyMaster {
     constructor(options = {}) {
         this.options = options;
         this.skuids = options.skuids || [];
-        this.autoReserve = CONFIG.autoReserve
-        this.openQrInNewWindow = CONFIG.openQrInNewWindow
+        this.autoReserve = CONFIG.autoReserve;
+        this.openQrInNewWindow = CONFIG.openQrInNewWindow;
         this.userAgent = CONFIG.useRandomUA
             ? rua('desktop')
             : DEFAULT_USER_AGENT;
@@ -56,13 +56,24 @@ export default class MonkeyMaster {
     }
 
     async init() {
-        let cookieText = '';
+        const dirEntry = Array.from(Deno.readDirSync('./users/')).filter(
+            (item) => item.isFile
+        );
 
-        try {
-            cookieText = Deno.readTextFileSync(this.userPath + 'data');
-        } catch (error) {
-            Deno.mkdirSync(this.userPath);
-        }
+        dirEntry.unshift({ name: '+ user' });
+
+        const userFileIdx = prompt(
+            `选择用户: 默认为登录新用户 \n${dirEntry
+                .map((item, index) => '[' + index + '] ' + item.name)
+                .join('\n')}`,
+            0
+        );
+
+        this.userPath = +userFileIdx
+            ? './users/' + dirEntry[userFileIdx].name
+            : Deno.makeTempFileSync();
+
+        const cookieText = Deno.readTextFileSync(this.userPath);
 
         if (cookieText) {
             this.headers.set('Cookie', cookieText);
@@ -197,11 +208,17 @@ export default class MonkeyMaster {
                 }
             );
 
-            this.saveCookie(res.headers.get('set-cookie'));
+            await this.onLoginSucceed(res.headers.get('set-cookie'));
 
             return res.status === 200;
         }
         return false;
+    }
+
+    async onLoginSucceed(cookieString) {
+        (this.username = getCookie(cookieString, 'pin')),
+            (this.userPath = './users/' + this.username);
+        await this.saveCookie(cookieString);
     }
 
     async getUserInfo() {
@@ -264,7 +281,7 @@ export default class MonkeyMaster {
         }
 
         this.headers.set('Cookie', newCookie);
-        Deno.writeTextFileSync(this.userPath + 'data', newCookie);
+        Deno.writeTextFileSync(this.userPath, newCookie);
 
         return newCookie;
     }
@@ -299,7 +316,9 @@ export default class MonkeyMaster {
         // 尝试获取粗略开抢时间
         let buyTime;
         try {
-            const { yuyueInfo } = await (await mFetch(url, { headers: this.headers })).json();
+            const { yuyueInfo } = await (
+                await mFetch(url, { headers: this.headers })
+            ).json();
             this.yuyueInfo = yuyueInfo;
         } catch (error) {}
 
@@ -317,7 +336,9 @@ export default class MonkeyMaster {
             mFetch(this.yuyueInfo.url, { headers: this.headers });
         }
 
-        if (!buyTime) {logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);}
+        if (!buyTime) {
+            logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
+        }
 
         return buyTime;
     }
@@ -509,17 +530,14 @@ export default class MonkeyMaster {
             },
         });
 
-        let res = await mFetch(
-            url,
-            {
-                method: 'GET',
-                referer: `https://item.jd.com/${skuId}.html`,
-                headers: this.headers,
-            }
-        );
+        let res = await mFetch(url, {
+            method: 'GET',
+            referer: `https://item.jd.com/${skuId}.html`,
+            headers: this.headers,
+        });
         // await logger.info(await res.text())
         const retJson = str2Json(await res.text());
-        return retJson['url'] ? 'https:' + retJson['url'] : ''
+        return retJson['url'] ? 'https:' + retJson['url'] : '';
     }
 
     /**
@@ -536,14 +554,11 @@ export default class MonkeyMaster {
             return;
         }
 
-        const res = await mFetch(
-            reserveUrl,
-            {
-                method: 'GET',
-                referer: `https://item.jd.com/${skuId}.html`,
-                headers: this.headers,
-            }
-        );
+        const res = await mFetch(reserveUrl, {
+            method: 'GET',
+            referer: `https://item.jd.com/${skuId}.html`,
+            headers: this.headers,
+        });
 
         const $ = cheerio.load(await res.text());
         if ($('p.bd-right-code').text().trim()) {
@@ -558,9 +573,9 @@ export default class MonkeyMaster {
      * 预约所有商品
      */
     async reserveAll() {
-        logger.info('尝试自动预约:')
+        logger.info('尝试自动预约:');
         for (let { skuid, count } of this.skuids) {
-            await this.makeReserve(skuid)
+            await this.makeReserve(skuid);
         }
     }
 
@@ -705,7 +720,8 @@ export default class MonkeyMaster {
 
         while (setTimeStamp > this.jdTime) {
             this.jdTime = await this.timeSyncWithJD();
-            const timeRemainMS = setTimeStamp - this.jdTime - numAvg(this.postConsumes);
+            const timeRemainMS =
+                setTimeStamp - this.jdTime - numAvg(this.postConsumes);
             const timeRemainSec = (timeRemainMS / 1000).toFixed(3);
 
             console.info(

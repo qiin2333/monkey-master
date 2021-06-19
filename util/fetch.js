@@ -7,13 +7,13 @@ export default function (url, options = {}) {
 
     const timeoutPromise = new Promise((resolve, reject) => {
         setTimeout(() => {
-            controller.abort();
             resolve(
                 new Response(new ReadableStream(), {
                     status: 504,
                     statusText: 'timeout!',
                 })
             );
+            controller.abort();
         }, options.timeout || CONFIG.timeout);
     });
 
