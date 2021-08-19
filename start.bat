@@ -1,1 +1,1 @@
-deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-plugin --unstable --no-check index.js
+deno run --allow-env --allow-read --allow-write --allow-net --allow-run --unstable --no-check index.js

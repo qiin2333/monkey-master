@@ -14,4 +14,4 @@ ENV DENO_INSTALL="/root/.deno"
 ENV PATH="$DENO_INSTALL/bin:$PATH"
 
 
-CMD deno run --allow-env --allow-read --allow-write --allow-net --allow-run --allow-plugin --unstable --no-check index.js
+CMD deno run --allow-env --allow-read --allow-write --allow-net --allow-run --unstable --no-check index.js

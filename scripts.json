@@ -4,7 +4,7 @@
     "start": {
       "cmd": "deno run --unstable --no-check index.js",
       "desc": "",
-      "allow": ["env", "write", "read", "net", "run", "plugin"]
+      "allow": ["env", "write", "read", "net", "run"]
     }
   }
 }

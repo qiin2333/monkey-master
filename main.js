@@ -57,7 +57,7 @@ export default class MonkeyMaster {
 
     async init() {
         const dirEntry = Array.from(Deno.readDirSync('./users/')).filter(
-            (item) => item.isFile
+            (item) => item.isFile && !/^\./.test(item.name)
         );
 
         dirEntry.unshift({ name: '+ user' });
