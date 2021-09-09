@@ -24,7 +24,7 @@ import {
     cookieParse,
     encodePwd,
     obj2qs,
-    numAvg,
+    arrayMedian,
     genAreaId,
     isInStock,
 } from './util/util.js';
@@ -681,7 +681,7 @@ export default class MonkeyMaster {
             }
 
             await sleep(0.2);
-            runOrder();
+            await runOrder();
         };
 
         await this.cancelSelectCartSkus();
@@ -721,7 +721,7 @@ export default class MonkeyMaster {
         while (setTimeStamp > this.jdTime) {
             this.jdTime = await this.timeSyncWithJD();
             const timeRemainMS =
-                setTimeStamp - this.jdTime - numAvg(this.postConsumes);
+                setTimeStamp - this.jdTime - arrayMedian(this.postConsumes);
             const timeRemainSec = (timeRemainMS / 1000).toFixed(3);
 
             console.info(

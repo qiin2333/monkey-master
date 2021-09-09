@@ -53,6 +53,17 @@ export function numAvg(arr) {
     return sum / len;
 }
 
+export function arrayMedian(arr) {
+    const len = arr.length;
+    arr.sort();
+
+    if (len % 2 === 0) {
+        return (arr[len / 2 - 1] + arr[len / 2]) / 2;
+    }
+
+    return arr[Math.floor(len / 2)];
+}
+
 export function genAreaId(addr, separator = '_') {
     const { provinceId, cityId, countyId, townId } = addr;
     return `${provinceId}${separator}${cityId}${separator}${countyId}${separator}${townId}`;
