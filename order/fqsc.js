@@ -225,7 +225,7 @@ export default class SecKill {
 
         console.info(ret);
 
-        return ret.code === 0;
+        return ret.submitOrder?.Flag;
     }
 }
 

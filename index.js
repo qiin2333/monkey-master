@@ -10,9 +10,14 @@ let skuids = prompt(
     .trim()
     .split(',');
 
+let assetsCode = prompt(
+    '输入资产使用密码，没有就下一步',
+    null
+)
+
 const ins = new MonkeyMaster({
     skuids,
-    password: CONFIG.orderDeps.password,
+    password: assetsCode || CONFIG.orderDeps.password,
     areaId: CONFIG.orderDeps.area,
     eid: CONFIG.orderDeps.eid,
     fp: CONFIG.orderDeps.fp,

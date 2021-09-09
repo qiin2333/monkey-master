@@ -1,12 +1,11 @@
 {
   "timeout": 5000,
   "useRandomUA": false,
+  "intersection": 0.5,
   "orderDeps": {
     "trackId": "TestTrackId",
-    "riskControl": "",
-    "password": "123456"
+    "riskControl": ""
   },
-  "userPath": "./cookies/",
   "sckey": "",
   "autoReserve": true,
   "openQrInNewWindow": false

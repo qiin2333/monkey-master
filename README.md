@@ -53,24 +53,25 @@ denon start
 
 在 conf.json 文件中配置必要参数：
 
-| 参数         | 说明                                                           | 是否必须 | 数据类型 | 默认值    |
-| ------------ | -------------------------------------------------------------- | -------- | -------- | --------- |
-| timeout      | 请求超时时间 单位毫秒                                          |          | Number   | 5000      |
-| useRandomUA  | 启动随机 user-agent                                           |          | Boolean  | false     |
-| intersection | 提交订单请求重叠时间                                           |          | Number   | 0.4       |
-| userPath     | 用户信息暂存目录                                               |          | string   | ./cookie/ |
-| password     | 支付密码（资产使用密码，如果确认账户没有红包余额可以不配置）                                        | required | string   |           |
-| eid          | 设备 ID，部分系统可自动获取也可以手动配置                      |          | string   |           |
-| fp           | fingerprint，部分系统可自动获取也可以手动配置                  |          | string   |           |
-| sckey        | 用于下单成功的消息推送，这里借用第三方工具 http://sc.ftqq.com/ |          | string   |           |
-| autoReserve  | 在定时下单时是否开启自动预约(当需要输入验证码时会跳过预约)      |          | Boolean    |   true    |
-| openQrInNewWindow  | 在新窗口中打开二维码，为false时会在terminal中打开二维码 |         | Boolean  |   false    |
+| 参数              | 说明                                                           | 是否必须 | 数据类型 | 默认值    |
+| ----------------- | -------------------------------------------------------------- | -------- | -------- | --------- |
+| timeout           | 请求超时时间 单位毫秒                                          |          | Number   | 5000      |
+| useRandomUA       | 启动随机 user-agent                                            |          | Boolean  | false     |
+| intersection      | 提交订单请求重叠时间                                           |          | Number   | 0.4       |
+| userPath          | 用户信息暂存目录                                               |          | string   | ./cookie/ |
+| eid               | 设备 ID，部分系统可自动获取也可以手动配置                      |          | string   |           |
+| fp                | fingerprint，部分系统可自动获取也可以手动配置                  |          | string   |           |
+| sckey             | 用于下单成功的消息推送，这里借用第三方工具 http://sc.ftqq.com/ |          | string   |           |
+| autoReserve       | 在定时下单时是否开启自动预约(当需要输入验证码时会跳过预约)     |          | Boolean  | true      |
+| openQrInNewWindow | 在新窗口中打开二维码，为 false 时会在 terminal 中打开二维码    |          | Boolean  | false     |
+
+支持多实利多账号运行，具体帐号相关配置在运行时填写。
 
 ### 最佳实践
 
--   操作之前删除购物车内的相关物品
+-   操作之前建议删除购物车内的相关物品
 -   抢购时间的设置使用精确的实际时间即可，本公举通过客户端网络延迟计算了最后下单秒杀需要提前的时间
--   增加金融分期商城接口，可从秒杀模式进入（听说这个方式节省步骤成功率较高)
+-   增加金融分期商城接口下单速度更快，可从模式2进入。
 -   关于抢购模式的问题可以看看这里 [issue #30](https://github.com/chou0212/monkey-master/issues/30)
 -   还有问题？[![follow us](http://pub.idqqimg.com/wpa/images/group.png 'follow us')](https://qm.qq.com/cgi-bin/qm/qr?k=sgAvZ_SsEL1h0r6sgPkBn89eD0-TOmgV&jump_from=webapi)
 
@@ -78,4 +79,4 @@ denon start
 
 -   [x] auto get fingerprint (e.g. eid,fp).
 -   [x] 秒杀商品
--   [ ] GUI - 改为server支持实现
+-   [ ] GUI - 改为 server 支持实现
