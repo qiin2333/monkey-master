@@ -78,6 +78,7 @@ export default class MonkeyMaster {
         if (cookieText) {
             this.headers.set('Cookie', cookieText);
             this.isLogged = await this.validateCookies();
+            this.username = getCookie(cookieText, 'pin');
         }
 
         while (!this.isLogged) {
@@ -216,8 +217,8 @@ export default class MonkeyMaster {
     }
 
     async onLoginSucceed(cookieString) {
-        (this.username = getCookie(cookieString, 'pin')),
-            (this.userPath = './users/' + this.username);
+        this.username = getCookie(cookieString, 'pin');
+        this.userPath = './users/' + this.username;
         await this.saveCookie(cookieString);
     }
 
@@ -593,12 +594,12 @@ export default class MonkeyMaster {
                 this.getOrderInfo(),
                 sleep(this.options.intersection || 0.5),
             ]);
-            await this.submitOrder();
+            return await this.submitOrder();
         };
 
         await this.cancelSelectCartSkus();
         await this.waiting4Start(setTimeStamp);
-        await runOrder();
+        return await runOrder();
     }
 
     async seckillOnTime(time) {
@@ -680,13 +681,13 @@ export default class MonkeyMaster {
                 return true;
             }
 
-            await sleep(0.2);
+            await sleep(random.real(0, 5));
             await runOrder();
         };
 
         await this.cancelSelectCartSkus();
         await this.waiting4Start(setTimeStamp);
-        await runOrder();
+        return await runOrder();
     }
 
     async timeSyncWithJD() {

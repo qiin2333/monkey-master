@@ -10,10 +10,7 @@ let skuids = prompt(
     .trim()
     .split(',');
 
-let assetsCode = prompt(
-    '输入资产使用密码，没有就下一步',
-    null
-)
+let assetsCode = prompt('输入资产使用密码，没有就下一步', null);
 
 const ins = new MonkeyMaster({
     skuids,
@@ -25,6 +22,7 @@ const ins = new MonkeyMaster({
 
 await ins.init();
 
+const messageUrl = `https://sctapi.ftqq.com/${CONFIG.sckey}.send?title=${ins.username}, you got it 🍌🍌🍌🍌🍌&desp=sku: ${ins.skuids[0]}买到了&channel=9`;
 
 // 该商品需要实名认证才可抢购的情况 无法通过金融通道秒杀
 const mode = prompt(
@@ -42,9 +40,7 @@ switch (mode) {
             skuids.length > 1 ? 'buyMultiSkusInStock' : 'buySingleSkuInStock';
 
         if (await ins[buyFunc](interval)) {
-            await fetch(
-                `https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it 🍌🍌🍌🍌🍌`
-            );
+            await fetch(messageUrl);
             Deno.exit();
         }
 
@@ -65,7 +61,11 @@ switch (mode) {
         if (ins.autoReserve) {
             await ins.reserveAll();
         }
-        await ins[buyOnTimeFunc](buyTime);
+
+        if (await ins[buyOnTimeFunc](buyTime)) {
+            await fetch(messageUrl);
+            Deno.exit();
+        }
 
         prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y'
             ? await ins.buySingleSkuInStock()
@@ -79,9 +79,8 @@ switch (mode) {
             prompt('输入抢购开始时间, 格式为 yyyy-MM-dd HH:mm:ss.SSS');
 
         if (await ins.seckillOnTime(secKillTime)) {
-            await fetch(
-                `https://sc.ftqq.com/${CONFIG.sckey}.send?text=Yes, you got it 🍌🍌🍌🍌🍌`
-            );
+            await fetch(messageUrl);
+            Deno.exit();
         }
 
         break;
