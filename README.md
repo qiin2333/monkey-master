@@ -36,7 +36,7 @@ iwr https://deno.land/x/install/install.ps1 -useb | iex
 
 ```bash
 
-deno install -qAf --unstable https://deno.land/x/denon/denon.ts
+deno install -qAf --unstable --no-check  https://deno.land/x/denon/denon.ts
 ```
 
 ### 启动

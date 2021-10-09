@@ -22,7 +22,7 @@ const ins = new MonkeyMaster({
 
 await ins.init();
 
-const messageUrl = `https://sctapi.ftqq.com/${CONFIG.sckey}.send?title=${ins.username}, you got it 🍌🍌🍌🍌🍌&desp=sku: ${ins.skuids[0]}买到了&channel=9`;
+const messageUrl = `https://sctapi.ftqq.com/${CONFIG.sckey}.send?title=${ins.username}, you got it 🍌🍌🍌🍌🍌&desp=sku: ${JSON.stringify(ins.skuids[0])}买到了&channel=9`;
 
 // 该商品需要实名认证才可抢购的情况 无法通过金融通道秒杀
 const mode = prompt(
