@@ -75,9 +75,14 @@ export default class MonkeyMaster {
             ? './users/' + this.username
             : Deno.makeTempFileSync();
 
-        const cookieText = Deno.readTextFileSync(this.userPath);
+        const fileInfo = await Deno.lstat(this.userPath);
+        const cookieText = await Deno.readTextFile(this.userPath);
 
-        if (cookieText) {
+        // cookie 24h有效
+        if (
+            cookieText &&
+            Date.now() - Date.parse(fileInfo.mtime) < 1000 * 3600 * 23
+        ) {
             this.headers.set('Cookie', cookieText);
             this.isLogged = await this.validateCookies();
         }

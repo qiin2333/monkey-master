@@ -71,7 +71,10 @@ switch (mode) {
         //     ? await ins.buySingleSkuInStock()
         //     : Deno.exit();
 
-        await ins.buySingleSkuInStock();
+        if (await ins.buySingleSkuInStock()) {
+            await fetch(messageUrl);
+            Deno.exit();
+        }
 
         break;
 
