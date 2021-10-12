@@ -67,9 +67,11 @@ switch (mode) {
             Deno.exit();
         }
 
-        prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y'
-            ? await ins.buySingleSkuInStock()
-            : Deno.exit();
+        // prompt('是否立即运行有货下单模式进行捡漏 y/n', 'n') === 'y'
+        //     ? await ins.buySingleSkuInStock()
+        //     : Deno.exit();
+
+        await ins.buySingleSkuInStock();
 
         break;
 

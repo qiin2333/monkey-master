@@ -69,8 +69,10 @@ export default class MonkeyMaster {
             0
         );
 
+        this.username = dirEntry[userFileIdx].name;
+
         this.userPath = +userFileIdx
-            ? './users/' + dirEntry[userFileIdx].name
+            ? './users/' + this.username
             : Deno.makeTempFileSync();
 
         const cookieText = Deno.readTextFileSync(this.userPath);
@@ -78,7 +80,6 @@ export default class MonkeyMaster {
         if (cookieText) {
             this.headers.set('Cookie', cookieText);
             this.isLogged = await this.validateCookies();
-            this.username = getCookie(cookieText, 'pin');
         }
 
         while (!this.isLogged) {
