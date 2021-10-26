@@ -19,6 +19,10 @@ export function cookieParse(cookies = '') {
 
 export function getCookie(cookieStr, key) {
     const reg = new RegExp(`${key}=(.*?)(;|$)`, 'm');
+    const match = cookieStr.match(reg);
+    if (!match) {
+        console.error('cookie解析出错，删除users目录对应cookie文件后重试');
+    }
     return cookieStr.match(reg)[1];
 }
 
