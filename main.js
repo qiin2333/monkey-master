@@ -928,7 +928,7 @@ export default class MonkeyMaster {
         const payload = {
             serInfo: {
                 area: this.areaId,
-                'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
+                // 'user-key': getCookie(this.headers.get('Cookie'), 'user-key'),
             },
             cartExt: {
                 specialId: 1,

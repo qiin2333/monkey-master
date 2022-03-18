@@ -22,6 +22,7 @@ export function getCookie(cookieStr, key) {
     const match = cookieStr.match(reg);
     if (!match) {
         console.error('cookie解析出错，删除users目录对应cookie文件后重试');
+        return '';
     }
     return cookieStr.match(reg)[1];
 }
