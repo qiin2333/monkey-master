@@ -9,7 +9,7 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 import UPNG from 'https://cdn.skypack.dev/@pdf-lib/upng';
 import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
-import { cheerio } from 'https://deno.land/x/cheerio@1.0.4/mod.ts';
+import * as cheerio from "https://jspm.dev/npm:cheerio";
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
