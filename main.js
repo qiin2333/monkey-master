@@ -9,7 +9,7 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 import UPNG from 'https://cdn.skypack.dev/@pdf-lib/upng';
 import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
-import * as cheerio from "https://jspm.dev/npm:cheerio";
+import * as cheerio from 'https://jspm.dev/npm:cheerio';
 
 import mFetch from './util/fetch.js';
 import { logger } from './util/log.js';
@@ -177,7 +177,7 @@ export default class MonkeyMaster {
         if (r.code === 200) {
             return r.ticket;
         } else {
-            logger.error(r.msg);
+            logger.info(r.msg);
         }
     }
 
@@ -515,10 +515,10 @@ export default class MonkeyMaster {
         let ret = false;
 
         try {
-            const retJson = await res.json();
-            ret = retJson.success;
+            this.result = await res.json();
+            ret = this.result.success;
             if (!ret) {
-                logger.critical(retJson);
+                logger.critical(this.result);
             }
         } catch (error) {}
 
