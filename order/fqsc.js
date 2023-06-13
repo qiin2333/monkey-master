@@ -3,7 +3,7 @@
  *
  */
 
-import mFetch from '../util/fetch.js';
+import { fetchOnce as mFetch, fetchAndRetry } from '../util/fetch.js';
 import { genAreaId } from '../util/util.js';
 import { Hash, encode } from 'https://deno.land/x/checksum@1.2.0/mod.ts';
 

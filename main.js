@@ -11,7 +11,7 @@ import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
 import * as cheerio from 'https://jspm.dev/npm:cheerio';
 
-import mFetch from './util/fetch.js';
+import { fetchOnce as mFetch, fetchAndRetry } from './util/fetch.js';
 import { logger } from './util/log.js';
 import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
@@ -456,7 +456,16 @@ export default class MonkeyMaster {
     }
 
     async submitOrder() {
-        const url = 'https://trade.jd.com/shopping/order/submitOrder.action';
+        const url = buildUrl('https://api.m.jd.com/api', {
+            queryParams: {
+                functionId: 'pc_trade_submitOrder',
+                appid: 'trade-jd-com-v5',
+                loginType: 3,
+                uuid: getCookie(this.headers.get('Cookie'), '__jda'),
+                t: String(Date.now()),
+            },
+        });
+
         const {
             eid = this.eid,
             fp = this.fp,
@@ -941,11 +950,11 @@ export default class MonkeyMaster {
 
         this.headers.set('Referer', 'https://cart.jd.com/');
 
-        const res = await mFetch(url, {
+        const res = await fetchAndRetry(url, {
             method: 'POST',
             headers: this.headers,
             body: JSON.stringify(payload),
-        });
+        }, 5);
 
         if (res.url !== url) {
             await this.loginCheck(res.url);
@@ -1044,11 +1053,10 @@ export default class MonkeyMaster {
 
         this.headers.set('Referer', 'https://cart.jd.com/');
 
-        const res = await mFetch(url, {
+        const res = await fetchAndRetry(url, {
             method: 'POST',
             headers: this.headers,
         }).then((r) => r.json());
-
         return res.code === 0;
     }
 
