@@ -542,9 +542,13 @@ export default class MonkeyMaster {
             referer: `https://item.jd.com/${skuId}.html`,
             headers: this.headers,
         });
-        // await logger.info(await res.text())
-        const retJson = str2Json(await res.text());
-        return retJson['url'] ? 'https:' + retJson['url'] : '';
+
+        let ret = '';
+        try {
+            const resObj = str2Json(await res.text());
+            ret = resObj['url'] ? 'https:' + resObj['url'] : '';
+        } catch (error) {}
+        return ret;
     }
 
     /**
