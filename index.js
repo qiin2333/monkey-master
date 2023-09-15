@@ -18,6 +18,7 @@ const ins = new MonkeyMaster({
     areaId: CONFIG.orderDeps.area,
     eid: CONFIG.orderDeps.eid,
     fp: CONFIG.orderDeps.fp,
+    fpRequired: true,
 });
 
 await ins.init();

@@ -99,7 +99,7 @@ export default class SecKill {
             `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&xxfSceneId=A340047790792949760`
         );
 
-        const { addr } = this.options;
+        const { addr, fp, eid } = this.options;
 
         const payload = {
             AppKeplerParams: {},
@@ -209,6 +209,7 @@ export default class SecKill {
         urlencoded.append('t', String(Date.now()));
         urlencoded.append('client', 'jddx_m');
         urlencoded.append('clientVersion', '8.1.8');
+        urlencoded.append('x-api-eid-token', eid);
 
         const res = await mFetch(url, {
             method: 'POST',

@@ -1,48 +1,16 @@
-import pptr from 'https://unpkg.com/puppeteer-core@5.5.0/lib/esm/puppeteer/web.js';
+import puppeteer from 'https://deno.land/x/puppeteer/mod.ts';
 import { readLines } from 'https://deno.land/std/io/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 
 let browser;
 
 export async function initBrowser() {
-  const p = await Deno.run({
-    cmd: [
-      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      '--headless',
-      '--remote-debugging-port=8964',
-      '--profile-directory=/tmp/pptr/',
-      '--crash-dumps-dir=/tmp/crash/',
-      'http://github.com',
-    ],
-    stdout: 'piped',
-    stderr: 'piped',
-  });
-  
-  // get the ws url from Chrome Output
-  async function logChromeOuput() {
-    for await (const line of readLines(p.stderr)) {
-      console.info('chrome output:', line);
-  
-      const i = line.indexOf('ws://');
-  
-      if (i > 0) {
-        return line.slice(i);
-      }
-    }
-  }
-  
-  const ws = await logChromeOuput();
-  
-  browser = await pptr.connect({
-    browserWSEndpoint: ws,
-    ignoreHTTPSErrors: true,
-  });
-
-  return browser;
+    browser = await puppeteer.launch();
+    return browser;
 }
 
 export async function closeBrowser() {
-  return await browser.close();
+    return await browser.close();
 }
 
 /**
@@ -53,20 +21,21 @@ export async function closeBrowser() {
  * @returns
  */
 export async function getAreaId(skuid) {
-  const page = await browser.newPage();
-  await page.goto(`https://item.jd.com/${skuid}.html`);
-  return await page.$eval('.ui-area-text', (el) => el.dataset.id);
+    const page = await browser.newPage();
+    await page.goto(`https://item.jd.com/${skuid}.html`);
+    return await page.$eval('.ui-area-text', (el) => el.dataset.id);
 }
 /**
  *
  *
  * @export
+ * @param {String} skuid
  * @param {String} userAgent
  */
-export async function getFP(ua) {
-  const page = await browser.newPage();
-  await page.setUserAgent(ua);
-  await page.goto(`https://trade.jd.com/shopping/order/getOrderInfo.action`);
-  await sleep(0.5);
-  return await page.evaluate('_JdTdudfp');
+export async function getFP(skuid, ua) {
+    const page = await browser.newPage();
+    await page.setUserAgent(ua);
+    await page.goto(`https://fq.jr.jd.com/major/index.html?skuId=${skuid}`);
+    await sleep(0.5);
+    return await page.evaluate('window.getJsToken((t) => {window.ret = t}, 1e3), ret');
 }

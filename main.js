@@ -103,6 +103,7 @@ export default class MonkeyMaster {
 
         await this.getUserInfo();
         await this.cancelSelectCartSkus();
+        await this.getJSToken();
     }
 
     async validateCookies() {
@@ -438,20 +439,24 @@ export default class MonkeyMaster {
         // new Function('$', tdjsCode)();
         // console.log(_JdJrTdRiskFpInfo);
 
+        // await this.getJSToken();
+    }
+
+    async getJSToken() {
         if (this.options.fp && this.options.eid) {
             this.fp = this.options.fp;
             this.eid = this.options.eid;
-        } else if (this.fpRequired) {
-            logger.info('获取必要信息中，大约需要30秒');
+        } else if (this.options.fpRequired) {
+            console.log('获取必要信息中，要等一会儿哦');
 
             const browser = await initBrowser();
-            const { fp, eid } = await getFP(this.userAgent);
-            this.fp = fp;
-            this.eid = eid;
+            const { fp, jsToken } = await getFP(this.skuids[0], this.userAgent);
+            this.fp = this.options.fp = fp;
+            this.eid = this.options.eid = jsToken;
 
             await closeBrowser();
 
-            logger.critical(`fp获取成功, fp: ${fp}, eid: ${eid}`);
+            console.log(`fp获取成功, fp: ${fp}, eid: ${jsToken}`);
         }
     }
 
