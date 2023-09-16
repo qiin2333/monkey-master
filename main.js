@@ -11,7 +11,7 @@ import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
 import * as cheerio from 'https://jspm.dev/npm:cheerio';
 
-import { fetchOnce as mFetch, fetchAndRetry } from './util/fetch.js';
+import { fetchOnce as mFetch } from './util/fetch.js';
 import { logger } from './util/log.js';
 import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
@@ -103,7 +103,7 @@ export default class MonkeyMaster {
 
         await this.getUserInfo();
         await this.cancelSelectCartSkus();
-        await this.getJSToken();
+        await this.getJSToken(cookieText);
     }
 
     async validateCookies() {
@@ -442,7 +442,7 @@ export default class MonkeyMaster {
         // await this.getJSToken();
     }
 
-    async getJSToken() {
+    async getJSToken(cookieText) {
         if (this.options.fp && this.options.eid) {
             this.fp = this.options.fp;
             this.eid = this.options.eid;
@@ -450,14 +450,19 @@ export default class MonkeyMaster {
             console.log('获取必要信息中，要等一会儿哦');
 
             const browser = await initBrowser();
-            const { fp, jsToken } = await getFP(this.skuids[0], this.userAgent);
+            const { fp, jsToken } = await getFP(
+                this.skuids[0],
+                this.userAgent,
+                cookieText
+            );
             this.fp = this.options.fp = fp;
             this.eid = this.options.eid = jsToken;
 
             await closeBrowser();
 
-            console.log(`fp获取成功, fp: ${fp}, eid: ${jsToken}`);
+            console.log(`fp获取成功, fp: ${this.fp}, eid: ${this.eid}`);
         }
+        this.saveCookie('3AB9D23F7A4B3CSS=' + this.eid);
     }
 
     async submitOrder() {
@@ -955,11 +960,11 @@ export default class MonkeyMaster {
 
         this.headers.set('Referer', 'https://cart.jd.com/');
 
-        const res = await fetchAndRetry(url, {
+        const res = await mFetch(url, {
             method: 'POST',
             headers: this.headers,
             body: JSON.stringify(payload),
-        }, 5);
+        });
 
         if (res.url !== url) {
             await this.loginCheck(res.url);
@@ -1058,7 +1063,7 @@ export default class MonkeyMaster {
 
         this.headers.set('Referer', 'https://cart.jd.com/');
 
-        const res = await fetchAndRetry(url, {
+        const res = await mFetch(url, {
             method: 'POST',
             headers: this.headers,
         }).then((r) => r.json());
