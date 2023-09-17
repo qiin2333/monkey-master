@@ -41,18 +41,29 @@ export async function getFP(skuid, ua, cookieString) {
             ...Cookie.from(item),
             domain: '.jd.com',
             path: '/',
+            expires: 3600 + Date.now(),
         }))
         .filter(({ name }) => name);
+    await page.setRequestInterception(true);
+    page.on('request', async(req) => {
+        if (req.isInterceptResolutionHandled()) return;
+        if (
+            req.url().startsWith('https://api.m.jd.com/api?functionId=wareBusiness')
+        ) {
+            // console.log(req.headers());
+        } else req.continue();
+    });
     await page.setUserAgent(ua);
     await page.setCookie(...cookieArray);
-    await page.goto(`https://fq.jr.jd.com/major/index.html?skuId=${skuid}`, {
-        waitUntil: 'networkidle2',
-    });
-    await sleep(0.5);
+    await page.goto(`https://fq.jr.jd.com/major/index.html?skuId=${skuid}`);
+    await page.waitForRequest('https://api.m.jd.com/api?functionId=wareBusiness.style&screen=1920*1080');
 
-    const ret = await page.evaluate(
+    const jsToken = await page.evaluate(
         'window.getJsToken((t) => {window.r = t}, 1e3), r'
     );
+    // const h5st = await page.evaluate(
+    //     'window.getJsToken((t) => {window.r = t}, 1e3), r'
+    // );
     await page.close();
-    return ret;
+    return jsToken;
 }

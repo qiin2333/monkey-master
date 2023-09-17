@@ -15,7 +15,7 @@ export default class SecKill {
         this.pwd = new Hash('md5').digest(encode(options.password)).hex();
         this.headers = new Headers(options.headers);
         this.headers.set('Host', 'api.m.jd.com');
-        this.headers.set('Origin', 'https://q.jd.com');
+        this.headers.set('Origin', 'https://fq.jr.jd.com');
         this.headers.set(
             'User-Agent',
             'Mozilla/5.0 (Linux; Android 10; M2006J10C Build/QP1A.190711.020; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/77.0.3865.120 MQQBrowser/6.2 TBS/045426 Mobile Safari/537.36/application=JDJR-App&clientType=android&src=xiaomi&version=6.0.60&clientVersion=6.0.60&osVersion=10&osName=M2006J10C&isUpdate=0&HiClVersion=6.0.60&netWork=1&netWorkType=4&CpayJS=UnionPay/1.0 JDJR&sPoint=&*#@jdPaySDK*#@jdPayChannel=jdFinance&jdPayChannelVersion=6.0.60&jdPaySdkVersion=3.00.35.00&androidBrand=Redmi&androidManufacturer=Xiaomi&jdPayClientName=Android*#@jdPaySDK*#@'
@@ -31,10 +31,9 @@ export default class SecKill {
     async createOrder() {
         const url = `https://api.m.jd.com/api?functionId=j_currentOrder_floor`;
         const headers = this.headers;
-        headers.set(
-            'Referer',
-            `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&groupId=2460&xxfSceneId=A308393754867154944&jrcontainer=h5&jrlogin=true&jrcloseweb=false&jrwallet=false&jrxviewtype=false&jrgobackrefresh=false`
-        );
+        headers.set('Referer', 'https://fq.jr.jd.com/');
+
+        const { addr, fp, eid, h5st } = this.options;
 
         const payload = {
             cartAdd: {
@@ -78,7 +77,9 @@ export default class SecKill {
         urlencoded.append('body', JSON.stringify(payload));
         urlencoded.append('t', String(Date.now()));
         urlencoded.append('client', 'jddx_m');
-        urlencoded.append('clientVersion', '8.1.8');
+        urlencoded.append('clientVersion', '8.0.0');
+        urlencoded.append('x-api-eid-token', eid);
+        urlencoded.append('h5st', h5st);
 
         const res = await mFetch(url, {
             method: 'POST',
@@ -87,7 +88,7 @@ export default class SecKill {
             redirect: 'follow',
         })
             .then((response) => response.text())
-            .then((result) => '')
+            .then((result) => console.log(result, '\n ------- 下单信息'))
             .catch((error) => console.log('error', error));
     }
 
@@ -99,7 +100,7 @@ export default class SecKill {
             `https://q.jd.com/m/xj/index.html?skuId=${this.skuid}&xxfSceneId=A340047790792949760`
         );
 
-        const { addr, fp, eid } = this.options;
+        const { addr, fp, eid, h5st } = this.options;
 
         const payload = {
             AppKeplerParams: {},
@@ -187,8 +188,7 @@ export default class SecKill {
                 url: '',
                 environments: 1,
             },
-            unpl:
-                'V2_ZzNtbUsEQxN0CkMEfE0LBWIAEgkRUUoWIVtAXChMCFdgBxBaclRCFnUUR1RnGV8UZwUZWEBcQhJFCHZUehhdAmYBF19LZ3Mldgh2XUsZWwRhBxBcRVFHFnINQF1/HFsDYwoQbXJXQh1FC0JTexpdBWYHEFxygeuZoqTWgN+uiKvYMxJbSlFFFXwMQlVLGGwHZgISWUtVQhF3OA06elRcAmYFFl9DUEURdg9DUnIdWQJhBxtfclZzFg==',
+            unpl: 'V2_ZzNtbUsEQxN0CkMEfE0LBWIAEgkRUUoWIVtAXChMCFdgBxBaclRCFnUUR1RnGV8UZwUZWEBcQhJFCHZUehhdAmYBF19LZ3Mldgh2XUsZWwRhBxBcRVFHFnINQF1/HFsDYwoQbXJXQh1FC0JTexpdBWYHEFxygeuZoqTWgN+uiKvYMxJbSlFFFXwMQlVLGGwHZgISWUtVQhF3OA06elRcAmYFFl9DUEURdg9DUnIdWQJhBxtfclZzFg==',
             orderUnion: '',
             supportAllEncode: false,
             sourceType: 2,
@@ -208,8 +208,9 @@ export default class SecKill {
         urlencoded.append('body', JSON.stringify(payload));
         urlencoded.append('t', String(Date.now()));
         urlencoded.append('client', 'jddx_m');
-        urlencoded.append('clientVersion', '8.1.8');
+        urlencoded.append('clientVersion', '8.0.0');
         urlencoded.append('x-api-eid-token', eid);
+        urlencoded.append('h5st', h5st);
 
         const res = await mFetch(url, {
             method: 'POST',
