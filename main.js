@@ -11,7 +11,7 @@ import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
 import * as cheerio from 'https://jspm.dev/npm:cheerio';
 
-import { fetchOnce as mFetch } from './util/fetch.js';
+import { fetchOnce as mFetch, fetchAndRetry } from './util/fetch.js';
 import { logger } from './util/log.js';
 import { initBrowser, closeBrowser, getFP } from './util/browser.js';
 
@@ -27,6 +27,8 @@ import {
     arrayMedian,
     genAreaId,
     isInStock,
+    getCommonH5ReqData,
+    makeCommonPostFormData,
 } from './util/util.js';
 
 const random = new Random();
@@ -297,52 +299,34 @@ export default class MonkeyMaster {
     async getBuyTime() {
         const { skuid, count } = this.skuids[0];
 
-        const url = buildUrl('https://item-soa.jd.com/getWareBusiness', {
-            queryParams: {
+        const url = 'https://api.m.jd.com/api?functionId=wareBusiness.style';
+        const urlencoded = makeCommonPostFormData();
+        urlencoded.append(
+            'body',
+            JSON.stringify({
+                pageUrl: `https://fq.jr.jd.com/major/index.html?skuId=${skuid}`,
+                jsToken: this.eid,
                 skuId: skuid,
-                num: count,
-                area: this.areaId,
-            },
-        });
-
-        this.headers.set('Referer', 'https://item.jd.com/');
-
-        // 尝试获取精确开抢时间
-        let exactTime;
-        try {
-            const res = await mFetch(
-                'https://yushou.jd.com/member/qualificationList.action',
-                { headers: this.headers }
-            );
-            const $ = cheerio.load(await res.text());
-            exactTime = $(`a[href*="${skuid}"]`)
-                .parents('.cont-box')
-                .find('input[id$=_buystime]')
-                .val();
-        } catch (e) {}
+                apolloId: '0fe444b5de424623b76c9288dfadf2d5',
+                apolloSecret: 'a4060564b2c74daaa09f0480de1be1b1',
+                rid: Date.now(),
+            })
+        );
 
         // 尝试获取粗略开抢时间
         let buyTime;
         try {
-            const { yuyueInfo } = await (
-                await mFetch(url, { headers: this.headers })
-            ).json();
-            this.yuyueInfo = yuyueInfo;
+            const res = await fetchAndRetry(url, {
+                method: 'POST',
+                referer: `https://q.jd.com/m/react/index.html?skuId=${skuid}`,
+                headers: this.headers,
+                body: urlencoded,
+            }).then((r) => r.json());
+            this.yuyueInfo = res?.others?.yuyueInfo;
+            buyTime = this.buyTime = new Date(this.yuyueInfo?.panicbuyingStartTime).toLocaleString();
         } catch (error) {}
 
-        try {
-            buyTime = this.yuyueInfo.buyTime.match(
-                /\d{4}-\d{2}-\d{2} \d{2}:\d{2}/
-            )[0];
-        } catch (error) {}
-
-        this.buyTime = buyTime = exactTime ?? buyTime;
-
-        logger.info(`${exactTime ? '' : '粗略'}开抢时间为 ${buyTime}`);
-
-        if (this.yuyueInfo && !this.yuyueInfo.yuyue && this.yuyueInfo.url) {
-            mFetch(this.yuyueInfo.url, { headers: this.headers });
-        }
+        logger.info(`开抢时间为 ${buyTime}`);
 
         if (!buyTime) {
             logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
@@ -431,15 +415,6 @@ export default class MonkeyMaster {
         await Promise.race([this.changeOrderAddr(this.areaId), sleep(0.05)]);
 
         logger.info(`订单结算页面响应: ${res.status}`);
-
-        // TODO: parse fingerprint
-        // const tdjsCode = await mFetch('https://gias.jd.com/js/td.js').then((res) =>
-        //   res.text()
-        // );
-        // new Function('$', tdjsCode)();
-        // console.log(_JdJrTdRiskFpInfo);
-
-        // await this.getJSToken();
     }
 
     async getJSToken(cookieText) {
@@ -545,58 +520,29 @@ export default class MonkeyMaster {
     }
 
     /**
-     * 获取预约地址
-     * @param {string} skuId "10025432414406"
-     */
-    async getReserveUrl(skuId) {
-        const url = buildUrl('https://yushou.jd.com/youshouinfo.action', {
-            queryParams: {
-                callback: 'fetchJSON',
-                sku: skuId,
-            },
-        });
-
-        let res = await mFetch(url, {
-            method: 'GET',
-            referer: `https://item.jd.com/${skuId}.html`,
-            headers: this.headers,
-        });
-
-        let ret = '';
-        try {
-            const resObj = str2Json(await res.text());
-            ret = resObj['url'] ? 'https:' + resObj['url'] : '';
-        } catch (error) {}
-        return ret;
-    }
-
-    /**
      * 根据skuId预约商品
      * @param {string} skuId "10025432414406"
      */
     async makeReserve(skuId) {
         if (!skuId) return;
-
-        const reserveUrl = await this.getReserveUrl(skuId);
-
-        if (!reserveUrl) {
-            logger.info(`${skuId} 非预约商品`);
-            return;
-        }
+        const reserveUrl =
+            'https://ms.jr.jd.com/gw2/generic/app/h5/m/addQualification';
+        const urlencoded = new URLSearchParams();
+        urlencoded.append(
+            'reqData',
+            JSON.stringify(getCommonH5ReqData({ skuId }))
+        );
 
         const res = await mFetch(reserveUrl, {
-            method: 'GET',
-            referer: `https://item.jd.com/${skuId}.html`,
+            method: 'POST',
+            referer: `https://q.jd.com/m/react/index.html?skuId=${skuId}`,
             headers: this.headers,
-        });
+            body: urlencoded,
+            redirect: 'error',
+        }).then((r) => r.json());
 
-        const $ = cheerio.load(await res.text());
-        if ($('p.bd-right-code').text().trim()) {
-            logger.info(`${skuId} 预约结果: 需要验证码, 无法预约`);
-            return;
-        }
-        const reserveResult = $('p.bd-right-result').text().trim();
-        logger.info(`${skuId} 预约结果: ${reserveResult}`);
+        logger.info(`${skuId} 预约结果: ${res?.resultMsg}`);
+        return res?.resultData?.resultCode === '0000';
     }
 
     /**

@@ -105,3 +105,37 @@ export function itemFilter(list) {
 
     return ret;
 }
+
+/**
+ *
+ * @param {*} options
+ */
+export function getCommonH5ReqData(options) {
+    const payload = {
+        appid: 'JDReactXxfgyl',
+        client: 'jddx_m',
+        clientVersion: '8.0.0',
+        t: String(Date.now()),
+        body: {
+            skuId: '',
+            sdkName: 'productDetail',
+            sdkClient: 'h5',
+            sdkVersion: '1.1.0',
+            ...options,
+        },
+    };
+}
+
+/**
+ *
+ * @param {*} options
+ * @returns
+ */
+export function makeCommonPostFormData(options) {
+    const urlencoded = new URLSearchParams();
+    urlencoded.append('appid', 'JDReactXxfgyl');
+    urlencoded.append('functionId', 'wareBusiness.style');
+    urlencoded.append('client', 'jddx_m');
+    urlencoded.append('clientVersion', '8.0.0');
+    return urlencoded;
+}
