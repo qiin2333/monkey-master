@@ -9,7 +9,6 @@ import loadJsonFile from 'https://deno.land/x/load_json_file@v1.0.0/mod.ts';
 import UPNG from 'https://cdn.skypack.dev/@pdf-lib/upng';
 import jsQR from 'https://cdn.skypack.dev/jsqr';
 import qrcodeTerminal from 'https://deno.land/x/qrcode_terminal/mod.js';
-import * as cheerio from 'https://jspm.dev/npm:cheerio';
 
 import { fetchOnce as mFetch, fetchAndRetry } from './util/fetch.js';
 import { logger } from './util/log.js';
@@ -314,7 +313,6 @@ export default class MonkeyMaster {
         );
 
         // 尝试获取粗略开抢时间
-        let buyTime;
         try {
             const res = await fetchAndRetry(url, {
                 method: 'POST',
@@ -323,16 +321,17 @@ export default class MonkeyMaster {
                 body: urlencoded,
             }).then((r) => r.json());
             this.yuyueInfo = res?.others?.yuyueInfo;
-            buyTime = this.buyTime = new Date(this.yuyueInfo?.panicbuyingStartTime).toLocaleString();
         } catch (error) {}
 
-        logger.info(`开抢时间为 ${buyTime}`);
-
-        if (!buyTime) {
+        const buyTime = this.yuyueInfo?.panicbuyingStartTime;
+        if (buyTime) {
+            this.buyTime = new Date(buyTime).toLocaleString();
+            logger.info(`开抢时间为 ${this.buyTime}`);
+            return this.buyTime;
+        } else {
             logger.info(`${skuid} 不是预约商品，需要输入自定购买时间`);
+            return false;
         }
-
-        return buyTime;
     }
 
     /**
