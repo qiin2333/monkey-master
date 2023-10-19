@@ -252,32 +252,47 @@ export default class MonkeyMaster {
             const addrsMsg = addrs
                 .map(
                     (addr, index) =>
-                        `[${index}]: ${addr.addressName}-${addr.fullAddress}-${addr.mobile}`
+                        `[${index}]: ${addr.Name}-${addr.Where}-${addr.Mobile}`
                 )
                 .join('\n');
             const index = prompt(
                 `选择下单地址: 默认为首个 \n${addrsMsg} \n`,
                 0
             );
-            this.addr = addrs[index];
-            this.areaId = genAreaId(this.addr);
+
+            const { Id, address } = addrs[index]
+            this.addr = {
+                ...addrs[index],
+                id: Id
+            };
+            this.areaId = address.split(',').join('_');
             console.log(`area id 获取成功: ${this.areaId}`);
         }
     }
 
     async getUserAddr() {
-        const url = buildUrl('https://cd.jd.com/usual/address', {
-            queryParams: {
-                callback: `jQuery${random.int(1000000, 9999999)}`,
-                _: String(Date.now()),
-            },
-        });
+        const url = 'https://api.m.jd.com/api?functionId=j_getAddressByPin';
+        const urlencoded = makeCommonPostFormData();
+        const headers = new Headers(this.headers);
+        headers.set('Origin', 'https://fq.jr.jd.com');
+        urlencoded.append(
+            'body',
+            JSON.stringify({
+                coordtype: '2',
+                jsToken: this.eid,
+                skuId: this.skuids[0],
+                rid: Date.now(),
+            })
+        );
 
-        this.headers.set('Referer', 'https://item.jd.com/');
+        const res = await fetchAndRetry(url, {
+            method: 'POST',
+            referer: 'https://fq.jr.jd.com/',
+            headers,
+            body: urlencoded,
+        }).then((r) => r.json());
 
-        const res = await mFetch(url, { headers: this.headers });
-
-        return str2Json(await res.text());
+        return res.addressList;
     }
 
     saveCookie(cookie) {
