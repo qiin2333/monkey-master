@@ -260,10 +260,10 @@ export default class MonkeyMaster {
                 0
             );
 
-            const { Id, address } = addrs[index]
+            const { Id, address } = addrs[index];
             this.addr = {
                 ...addrs[index],
-                id: Id
+                id: Id,
             };
             this.areaId = address.split(',').join('_');
             console.log(`area id 获取成功: ${this.areaId}`);
@@ -329,14 +329,16 @@ export default class MonkeyMaster {
 
         // 尝试获取粗略开抢时间
         try {
-            const res = await fetchAndRetry(url, {
+            const res = await mFetch(url, {
                 method: 'POST',
                 referer: `https://q.jd.com/m/react/index.html?skuId=${skuid}`,
                 headers: this.headers,
                 body: urlencoded,
             }).then((r) => r.json());
             this.yuyueInfo = res?.others?.yuyueInfo;
-        } catch (error) {}
+        } catch (error) {
+            console.log(error);
+        }
 
         const buyTime = this.yuyueInfo?.panicbuyingStartTime;
         if (buyTime) {
@@ -752,7 +754,13 @@ export default class MonkeyMaster {
     async buySingleSkuInStock(interval = 5) {
         const { skuid, count } = this.skuids[0];
 
-        await this.prepareToOrder(this.skuids[0]);
+        const fq = new FqKill({
+            ...this.options,
+            skuid,
+            num: count,
+            addr: this.addr,
+            headers: this.headers,
+        });
 
         while (true) {
             const skuStockInfo = await this.getSkuStockInfo(
@@ -765,7 +773,7 @@ export default class MonkeyMaster {
                 continue;
             }
 
-            if (isInStock(skuStockInfo[skuid])) break;
+            if (+skuStockInfo.sId > 1) break;
 
             const runInterval = random.real(2, interval);
 
@@ -776,7 +784,9 @@ export default class MonkeyMaster {
 
         logger.info(`${skuid} 好像有货了喔，下单试试`);
 
-        if (await this.submitOrder()) {
+        await fq.createOrder();
+
+        if (await fq.submitOrder()) {
             return true;
         } else {
             await sleep(interval);
@@ -875,25 +885,35 @@ export default class MonkeyMaster {
      * @param {String} areaId
      */
     async getSkuStockInfo(skuids, areaId) {
-        const url = buildUrl('https://c0.3.cn/stocks', {
-            queryParams: {
-                callback: `jQuery${random.int(1000000, 9999999)}`,
-                type: 'getstocks',
-                skuIds: skuids.join(','),
-                area: areaId,
-                _: String(Date.now()),
-            },
-        });
+        const url = 'https://api.m.jd.com/api?functionId=wareBusiness.style';
+        const urlencoded = makeCommonPostFormData();
+        urlencoded.append('area', areaId);
+        urlencoded.append(
+            'body',
+            JSON.stringify({
+                pageUrl: `https://fq.jr.jd.com/major/index.html?skuId=${skuids[0]}`,
+                jsToken: this.eid,
+                skuId: skuids[0],
+                rid: Date.now(),
+            })
+        );
+
+        const headers = new Headers(this.headers);
+        headers.set('Origin', 'https://fq.jr.jd.com');
 
         let stockInfo;
 
         try {
-            const res = await mFetch(url, { timeout: 1000 });
-
-            if (res.ok) {
-                stockInfo = str2Json(await res.text());
-            }
-        } catch {}
+            const res = await mFetch(url, {
+                method: 'POST',
+                referer: `https://q.jd.com/m/react/index.html?skuId=${skuids[0]}`,
+                headers,
+                body: urlencoded,
+            }).then((r) => r.json());
+            stockInfo = res?.others?.stockParam || {};
+        } catch (error) {
+            logger.error(error);
+        }
 
         return stockInfo;
     }
@@ -916,6 +936,7 @@ export default class MonkeyMaster {
             cartExt: {
                 specialId: 1,
             },
+            'x-api-eid-token': this.eid,
         };
 
         this.headers.set('Referer', 'https://cart.jd.com/');
@@ -994,6 +1015,7 @@ export default class MonkeyMaster {
         const payload = {
             operations: [{ TheSkus: theSkus }],
             serInfo: { area: this.areaId },
+            'x-api-eid-token': this.eid,
         };
 
         if (promotionId && singleItem.item.items) {
@@ -1027,6 +1049,7 @@ export default class MonkeyMaster {
             method: 'POST',
             headers: this.headers,
         }).then((r) => r.json());
+
         return res.code === 0;
     }
 

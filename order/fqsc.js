@@ -5,6 +5,7 @@
 
 import { fetchOnce as mFetch, fetchAndRetry } from '../util/fetch.js';
 import { genAreaId } from '../util/util.js';
+import { logger } from '../util/log.js';
 import { Hash, encode } from 'https://deno.land/x/checksum@1.2.0/mod.ts';
 
 export default class SecKill {
@@ -81,15 +82,15 @@ export default class SecKill {
         urlencoded.append('x-api-eid-token', eid);
         urlencoded.append('h5st', h5st);
 
-        const res = await mFetch(url, {
+        await mFetch(url, {
             method: 'POST',
             headers,
             body: urlencoded,
             redirect: 'follow',
         })
-            .then((response) => response.text())
-            .then((result) => console.log(result, '\n ------- 下单信息'))
-            .catch((error) => console.log('error', error));
+            .then((response) => response.json())
+            .then((result) => console.info(result, '\n ------- 下单信息'))
+            .catch((error) => logger.error(error));
     }
 
     async submitOrder() {
@@ -225,7 +226,7 @@ export default class SecKill {
             ret = await res.json();
         } catch (error) {}
 
-        console.info(ret);
+        logger.warning(ret);
 
         return ret.submitOrder?.Flag;
     }
