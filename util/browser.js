@@ -1,4 +1,4 @@
-import puppeteer from 'https://deno.land/x/puppeteer/mod.ts';
+import puppeteer from "npm:puppeteer";
 import { readLines } from 'https://deno.land/std/io/mod.ts';
 import { sleep } from 'https://deno.land/x/sleep/mod.ts';
 import { Cookie } from 'https://deno.land/x/another_cookiejar/mod.ts';

@@ -17,7 +17,7 @@ export function fetchOnce(url, options = {}) {
         }, options.timeout || CONFIG.timeout);
     });
 
-    return Promise.race([timeoutPromise, fetch(url, { signal, ...options })]);
+    return Promise.race([timeoutPromise, fetch(url, { signal, ...options })]).catch(console.error);
 }
 
 export async function fetchAndRetry(url, options = {}, times = 3) {
